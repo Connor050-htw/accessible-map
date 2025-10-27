@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Accessible Map</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="plugins/fullscreen/Control.FullScreen.css" />
+        <link rel="stylesheet" href="plugins/pinsearch/Leaflet.PinSearch.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    </head>
+    <body>
+        <!-- skip to map link -->
+        <a href="#map" class="skip-link">Skip to Map</a>
+        <header>
+            <h1>Accessible Map</h1>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#map">Map</a></li>
+                    <li><a href="about.html">About</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main>
+            <div id="map" aria-roledescription="Map of Castles in Austria" role="group" aria-label="Map" aria-describedby="keyboard-shortcuts">
+                <div id="keyboard-shortcuts" style="display: none;">
+                    To navigate the map with the keyboard, use the following shortcuts.
+                    Left arrow, Move left.
+                    Right arrow, Move right.
+                    Up arrow, Move up.
+                    Down arrow, Move down.
+                    Plus key, Zoom in.
+                    Minus key, Zoom out.
+                    Hold Shift key and F key to search for a castle.
+                    When screen reader is active hold Shift key to pan the map with arrow keys.
+                </div>
+                <div id="shortcuts-wrapper">
+                <div id="keyboard-shortcuts-view" tabindex="0" aria-label="Keyboard Shortcuts" aria-describedby="keyboard-shortcuts">
+                    <a class="popup-close-button" role="button" aria-label="Close popup"><span
+                            aria-hidden="true">×</span></a>
+                    <table>
+                        <h2>Keyboard Shortcuts</h2>
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><kbd aria-label="Left arrow">←</kbd></td>
+                                <td aria-label="Move left.">Move left</td>
+                            </tr>
+                            <tr>
+                                <td><kbd aria-label="Right arrow">→</kbd></td>
+                                <td aria-label="Move right.">Move right</td>
+                            </tr>
+                            <tr>
+                                <td><kbd aria-label="Up arrow">↑</kbd></td>
+                                <td aria-label="Move up.">Move up</td>
+                            </tr>
+                            <tr>
+                                <td><kbd aria-label="Down arrow">↓</kbd></td>
+                                <td aria-label="Move down.">Move down</td>
+                            </tr>
+                            <tr>
+                                <td><kbd aria-label="Plus key">+</kbd></td>
+                                <td aria-label="Zoom in.">Zoom in</td>
+                            </tr>
+                            <tr>
+                                <td><kbd aria-label="Minus key">-</kbd></td>
+                                <td aria-label="Zoom out.">Zoom out</td>
+                            </tr>
+                            <tr>
+                                <td><kbd aria-label="Shift key">Shift</kbd> + <kbd aria-label="F key">F</kbd></td>
+                                <td aria-label="Search for a castle.">Search for a castle</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+            </div>
+            <!-- toggle button to show/hide sidebar -->
+            <button id="sidebar-button" aria-label="Hide complementary content"><span aria-hidden="true">&lt;</span></button>
+
+        </main>
+        <aside id="sidebar" aria-label="Map description and configuration panel" tabindex="0">
+            <div>
+                <h2>Castles in Austria</h2>
+                <p>
+                    Austria is home to many castles. Some of the most famous castles in Austria are Hohenwerfen Castle, Hochosterwitz Castle, and Schloss Ort. Explore the map to find more castles in Austria.
+                </p>
+            </div>
+            <div id="map-config" tabindex="0" role="group" aria-label="Map configuration">
+                <h2>Map Configuration</h2>
+                <!-- increase or decrease font size -->
+                 <div class="font-setting config">
+                     <p aria-label="Font Size">Font Size</p>
+                     <span>
+                        <button id="increase-font-size" aria-label="Increase font size" title="Increase font size">A+</button>
+                        <button id="decrease-font-size" aria-label="Decrease font size" title="Decrease font size">A-</button>
+                    </span>
+                 </div>
+                <!-- high contrast mode -->
+                 <div class="contrast config">
+                    <p>High Contrast Mode</p>
+                    <label for="contrast-checkbox" class="switch">High Contrast Mode
+                        <input type="checkbox" aria-label="High Contrast Mode" id="contrast-checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                 </div>
+                <!-- display castle names -->
+                 <div class="labels config">
+                    <p>Display castle names</p>
+                    <label for="labels-checkbox" class="switch">Display castle names
+                        <input type="checkbox" aria-label="Show castle names on map" id="labels-checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                 </div>
+                <!-- basemap selector -->
+                 <div class="basemaps" tabindex="0" role="group" aria-labelledby="basemap-selector">
+                    <p id="basemap-selector">Select background map style</p>
+                    <div id="basemap-select" aria-label="Select background map style">
+                        <button class="basemap-selector-button" aria-label="OpenStreetMap"><img src="./images/osm.png" alt=""></button>
+                        <button class="basemap-selector-button" aria-label="OpenStreetMap.HOT"><img src="./images/hot.png" alt=""></button>
+                        <button class="basemap-selector-button" aria-label="MapTiler Dataviz"><img src="./images/maptilerdataviz.png" alt=""></button>
+                        <button class="basemap-selector-button" aria-label="MapTiler Toner"><img src="./images/maptilertoner.png" alt=""></button>
+                        <button class="basemap-selector-button" aria-label="Jawg Light"><img src="./images/jawglight.png" alt=""></button>
+                        <button class="basemap-selector-button" aria-label="Jawg Dark"><img src="./images/jawgdark.png" alt=""></button>
+                    </div>
+                 </div>
+            </div>
+            <!-- Symbols and meanings -->
+            <div aria-hidden="true">
+                <h2>Symbols and Meanings</h2>
+                <div id="symbols">
+                    <div class="symbol">
+                        <span>+</span>
+                        <p>Zoom in map</p>
+                    </div>
+                    <div class="symbol">
+                        <span>−</span>
+                        <p>Zoom out map</p>
+                    </div>
+                    <div class="symbol">
+                        <span class="fullscreen-icon"></span>
+                        <p>To fullscreen view</p>
+                    </div>
+                    <div class="symbol">
+                        <span class="fullscreen-icon leaflet-fullscreen-on"></span>
+                        <p>Exit fullscreen view</p>
+                    </div>
+                    <div class="symbol">
+                        <span class="leaflet-control-layers-toggle"></span>
+                        <p>Map layers toggle</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <script src="plugins/fullscreen/Control.FullScreen.js"></script>
+        <script src="plugins/pinsearch/Leaflet.PinSearch.js" type="module"></script>
+        <script src="script.js" type="module"></script>
+    </body>
+</html>
