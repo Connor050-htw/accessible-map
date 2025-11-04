@@ -238,6 +238,37 @@ aside {
         align-items: center;
     }
 
+    /* AI Controls */
+    .ai-config .ai-controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .ai-config .ai-inline {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .ai-config button.primary {
+        padding: 0.5rem 1rem;
+        background-color: #1900ff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .ai-config button.primary:disabled {
+        opacity: 0.6;
+        cursor: progress;
+    }
+
     /* checkbox slider starts */
     .switch {
         position: relative;
@@ -411,6 +442,27 @@ aside {
 
 .displayed {
     display: block;
+}
+
+/* AI description output bar */
+#ai-description-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 8px;
+    z-index: 5000;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 6px;
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+#ai-description {
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 /* About page */

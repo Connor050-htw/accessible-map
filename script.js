@@ -1,11 +1,13 @@
 // Define map layers
 const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    crossOrigin: true,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">OpenStreetMap</a>'
 });
 
 const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    crossOrigin: true,
     attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
 });
 
@@ -13,21 +15,25 @@ const key = 'fTqz035OSDg9GsUaD2Fu';
 
 const mtLayerDataviz = L.tileLayer(`https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=${key}`,{
     maxZoom: 19,
+    crossOrigin: true,
     attribution: '<a href="https://www.maptiler.com/copyright/" aria-label="MapTiler attribution. Opens in a new tab" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap contributors</a>',
 });
 
 const mtLayerToner = L.tileLayer(`https://api.maptiler.com/maps/toner-v2/{z}/{x}/{y}.png?key=${key}`, {
     maxZoom: 19,
+    crossOrigin: true,
     attribution: '<a href="https://www.maptiler.com/copyright/" aria-label="MapTiler attribution. Opens in a new tab" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap contributors</a>',
 });
 
 const jawgLight = L.tileLayer('https://tile.jawg.io/jawg-light/{z}/{x}/{y}{r}.png?access-token=72PfAsavPGBrPQf2FE0JOoybXUoXPpap3zQOpRhL0bsmh5CK4eilk2S9zcq3xAra', {
     maxZoom: 22,
+    crossOrigin: true,
     attribution: '<a href=\"https://www.jawg.io?utm_medium=map&utm_source=attribution\" aria-label="Jawg attribution. Opens in a new tab" target=\"_blank\">&copy; Jawg</a> - <a href=\"https://www.openstreetmap.org?utm_medium=map-attribution&utm_source=jawg\" aria-label="OpenStreetMap attribution. Opens in a new tab" target=\"_blank\">&copy; OpenStreetMap</a>&nbsp;contributors"'
 });
 
 const jawgDark = L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}{r}.png?access-token=72PfAsavPGBrPQf2FE0JOoybXUoXPpap3zQOpRhL0bsmh5CK4eilk2S9zcq3xAra', {
     maxZoom: 22,
+    crossOrigin: true,
     attribution: '<a href=\"https://www.jawg.io?utm_medium=map&utm_source=attribution\" aria-label="Jawg attribution. Opens in a new tab" target=\"_blank\">&copy; Jawg</a> - <a href=\"https://www.openstreetmap.org?utm_medium=map-attribution&utm_source=jawg\" aria-label="OpenStreetMap attribution. Opens in a new tab" target=\"_blank\">&copy; OpenStreetMap</a>&nbsp;contributors"'
 });
 
@@ -375,3 +381,65 @@ sidebarButton.addEventListener('keydown', (event) => {
 document.querySelectorAll('.label').forEach(label => label.setAttribute('aria-hidden', 'true'));
 
 export {focusPopup};
+
+// =====================
+// AI Map Description
+// =====================
+const API_BASE = 'http://127.0.0.1:8000';
+const aiButton = document.getElementById('ai-describe');
+const aiAudioToggle = document.getElementById('ai-audio');
+const aiSpeed = document.getElementById('ai-speed');
+const aiOutput = document.getElementById('ai-description');
+
+async function captureMapAsDataUrl() {
+    const mapEl = document.getElementById('map');
+    // html2canvas is loaded globally from CDN
+    const canvas = await html2canvas(mapEl, { useCORS: true, backgroundColor: null, scale: 1 });
+    return canvas.toDataURL('image/png');
+}
+
+async function requestDescription(imageDataUrl) {
+    const body = {
+        data_url: imageDataUrl,
+        speed: parseFloat(aiSpeed.value) || 1.0,
+        voice: 'random',
+        response_type: 'text',
+        skip_openai: false
+    };
+    const res = await fetch(`${API_BASE}/description/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    return res.json();
+}
+
+function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = parseFloat(aiSpeed.value) || 1.0;
+    // Use a locale-appropriate voice if available
+    const deVoices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('de'));
+    if (deVoices.length) u.voice = deVoices[0];
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+}
+
+aiButton?.addEventListener('click', async () => {
+    aiButton.disabled = true;
+    aiButton.textContent = 'Beschreibe…';
+    aiOutput.textContent = 'Die Karte wird analysiert…';
+    try {
+        const dataUrl = await captureMapAsDataUrl();
+        const result = await requestDescription(dataUrl);
+        const text = result?.text_data?.message || 'Keine Beschreibung verfügbar.';
+        aiOutput.textContent = text;
+        if (aiAudioToggle?.checked) speak(text);
+    } catch (err) {
+        aiOutput.textContent = `Fehler: ${err.message}`;
+    } finally {
+        aiButton.disabled = false;
+        aiButton.textContent = 'Beschreibung abrufen';
+    }
+});

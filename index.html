@@ -88,6 +88,11 @@
             <!-- toggle button to show/hide sidebar -->
             <button id="sidebar-button" aria-label="Hide complementary content"><span aria-hidden="true">&lt;</span></button>
 
+            <!-- AI-Ausgabe (barrierefrei) -->
+            <div id="ai-description-container" aria-live="polite" role="status">
+                <div id="ai-description"></div>
+            </div>
+
         </main>
         <aside id="sidebar" aria-label="Map description and configuration panel" tabindex="0">
             <div>
@@ -134,6 +139,22 @@
                         <button class="basemap-selector-button" aria-label="Jawg Dark"><img src="./images/jawgdark.png" alt=""></button>
                     </div>
                  </div>
+
+                 <!-- AI Kartenbeschreibung -->
+                 <div class="ai-config config" tabindex="0" role="group" aria-labelledby="ai-config-title">
+                    <p id="ai-config-title">AI Kartenbeschreibung</p>
+                    <div class="ai-controls">
+                        <label class="switch" for="ai-audio">Audio abspielen
+                            <input type="checkbox" id="ai-audio" aria-label="Audio abspielen" checked>
+                            <span class="slider round"></span>
+                        </label>
+                        <label for="ai-speed" class="ai-inline">
+                            Geschwindigkeit
+                            <input type="range" id="ai-speed" min="0.25" max="2.0" step="0.05" value="1">
+                        </label>
+                        <button id="ai-describe" class="primary">Beschreibung abrufen</button>
+                    </div>
+                 </div>
             </div>
             <!-- Symbols and meanings -->
             <div aria-hidden="true">
@@ -164,6 +185,8 @@
         </aside>
 
         <script src="plugins/fullscreen/Control.FullScreen.js"></script>
+        <!-- html2canvas für Screenshot der Leaflet-Karte -->
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
         <script src="plugins/pinsearch/Leaflet.PinSearch.js" type="module"></script>
         <script src="script.js" type="module"></script>
     </body>
