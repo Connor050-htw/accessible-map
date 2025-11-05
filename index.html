@@ -89,7 +89,7 @@
             <button id="sidebar-button" aria-label="Hide complementary content"><span aria-hidden="true">&lt;</span></button>
 
             <!-- AI-Ausgabe (barrierefrei) -->
-            <div id="ai-description-container" aria-live="polite" role="status">
+            <div id="ai-description-container" class="hidden" aria-live="polite" role="status">
                 <div id="ai-description"></div>
             </div>
 
@@ -127,6 +127,14 @@
                         <span class="slider round"></span>
                     </label>
                  </div>
+                 <!-- audio transcript toggle -->
+                 <div class="transcript config">
+                    <p>Show audio transcript</p>
+                    <label for="transcript-checkbox" class="switch">Audio transcript
+                        <input type="checkbox" aria-label="Show audio transcript bar" id="transcript-checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                 </div>
                 <!-- basemap selector -->
                  <div class="basemaps" tabindex="0" role="group" aria-labelledby="basemap-selector">
                     <p id="basemap-selector">Select background map style</p>
@@ -140,21 +148,7 @@
                     </div>
                  </div>
 
-                 <!-- AI Kartenbeschreibung -->
-                 <div class="ai-config config" tabindex="0" role="group" aria-labelledby="ai-config-title">
-                    <p id="ai-config-title">AI Kartenbeschreibung</p>
-                    <div class="ai-controls">
-                        <label class="switch" for="ai-audio">Audio abspielen
-                            <input type="checkbox" id="ai-audio" aria-label="Audio abspielen" checked>
-                            <span class="slider round"></span>
-                        </label>
-                        <label for="ai-speed" class="ai-inline">
-                            Geschwindigkeit
-                            <input type="range" id="ai-speed" min="0.25" max="2.0" step="0.05" value="1">
-                        </label>
-                        <button id="ai-describe" class="primary">Beschreibung abrufen</button>
-                    </div>
-                 </div>
+                 
             </div>
             <!-- Symbols and meanings -->
             <div aria-hidden="true">
@@ -164,8 +158,8 @@
                         <span>+</span>
                         <p>Zoom in map</p>
                     </div>
-                    <div class="symbol">
-                        <span>−</span>
+                        <div class="symbol">
+                        <span>-</span>
                         <p>Zoom out map</p>
                     </div>
                     <div class="symbol">
@@ -176,6 +170,10 @@
                         <span class="fullscreen-icon leaflet-fullscreen-on"></span>
                         <p>Exit fullscreen view</p>
                     </div>
+                    <div class="symbol">
+                        <span class="symbol-image"><img src="./images/speaker_icon.png" width="20" height="20"></span>
+                        <p>Start map audio description</p>
+                    </div>                    
                     <div class="symbol">
                         <span class="leaflet-control-layers-toggle"></span>
                         <p>Map layers toggle</p>

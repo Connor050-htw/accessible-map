@@ -30,7 +30,7 @@ Backend starten:
 cd map-to-speech-demo\api
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+(pip install -r requirements.txt)
 set OLLAMA_MODEL=qwen3-vl:4b
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 

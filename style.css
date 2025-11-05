@@ -229,7 +229,6 @@ aside {
         background-color: #0056b3;
     }
 
-
     .config {
         border-bottom: 1px solid lightgrey;
         padding: 10px;
@@ -387,6 +386,14 @@ aside {
             height: 30px;
             line-height: 30px;
             border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        span.symbol-image {
+            padding: 0;
+            line-height: 0;
         }
     }
 
@@ -449,21 +456,82 @@ aside {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 13px;
     margin: 8px;
+    margin-left: 360px;
+    margin-right: 10px;
     z-index: 5000;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
     color: #fff;
     padding: 10px 12px;
     border-radius: 6px;
-    max-height: 30vh;
+    max-height: 40px;
     overflow-y: auto;
+    display: block; /* Immer sichtbar */
+}
+
+/* Allow hiding the transcript bar when user disables it */
+#ai-description-container.hidden {
+    display: none;
 }
 
 #ai-description {
     font-size: 14px;
     line-height: 1.4;
 }
+
+/* Leaflet AI control */
+.leaflet-control-ai {
+    position: relative; /* Referenz für ausgeklapptes Panel */
+    display: flex;       /* sorgt dafür, dass die Breite nach rechts wächst */
+    align-items: center;
+}
+.leaflet-control-ai .ai-main-btn {
+    width: 30px;  /* Match Leaflet Control Button width */
+    height: 30px; /* Match Leaflet Control Button height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Remove extra padding */
+    margin: 0; /* Remove extra margin */
+    box-sizing: border-box; /* Include padding and border in size */
+}
+.leaflet-control-ai .ai-main-btn img {
+    width: 18px; /* Adjust image size */
+    height: 18px; /* Adjust image size */
+    pointer-events: none;
+    display: block;
+}
+.leaflet-control-ai .ai-main-btn:hover { background: #f8f8fa; }
+
+/* Panel permanently hidden - no hover expansion */
+.leaflet-control-ai .ai-panel {
+    display: none;          /* Panel komplett versteckt */
+}
+
+/* Eine Zeile: Toggle links, Button rechts */
+.leaflet-control-ai .ai-row { display: flex; align-items: center; gap: 8px; }
+.leaflet-control-ai .ai-start-btn {
+    width: 100%;
+    padding: 6px 8px;
+    margin: 0;
+    background-color: #1900ff;
+    color: #fff;
+    border: 1px solid rgba(0,0,0,0.2);   /* Grauer Rahmen direkt um den Button */
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18); /* optional, passend zum Leaflet-Look */
+    cursor: pointer;
+    font-weight: 600;
+    flex: 1; /* Button nimmt den restlichen Platz ein */
+}
+.leaflet-control-ai .ai-start-btn:disabled { opacity: 0.6; cursor: progress; }
+.leaflet-control-ai .ai-audio-toggle { display: flex; align-items: center; }
+
+/* Kompaktere Switch-Größe im Panel */
+.leaflet-control-ai .switch { width: 42px; height: 24px; }
+.leaflet-control-ai .switch .slider { border-radius: 24px; }
+.leaflet-control-ai .switch .slider:before { width: 18px; height: 18px; left: 3px; bottom: 3px; border-radius: 50%; }
+.leaflet-control-ai .switch input:checked + .slider:before { transform: translateX(18px); }
 
 /* About page */
 #about-body {

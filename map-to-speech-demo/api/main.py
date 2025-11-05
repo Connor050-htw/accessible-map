@@ -60,8 +60,12 @@ async def post_description(request_params: MapParams):
         b64_data = request_params.data_url
 
     prompt = (
-        "Using no more than 100 words, describe the geographic area shown. "
-        "Focus on notable landmarks, terrain, and settlement patterns that are visible."
+        "Describe this map in approximately 50 words for visually impaired users. "
+        "Focus on: 1) The geographic region, "
+        "2) The overall distribution and density of markers or features, "
+        "3) Notable clusters or patterns, "
+        "4) Cardinal directions (north, south, east, west) of key elements. "
+        "Be clear and structured."
     )
 
     # Prepare request for Ollama; try /api/generate, fallback to /api/chat

@@ -152,7 +152,7 @@ map.on('exitFullscreen', function () {
     fullscreenElement.setAttribute('aria-label', 'Open map in fullscreen mode');
 });
 
-// Add layer control
+// Add layer control (kept here so sidebar basemap bindings find it in DOM)
 L.control.layers(baseMaps).setPosition('topleft').addTo(map);
 
 // Add keyboard shortcuts to attribution control
@@ -387,9 +387,47 @@ export {focusPopup};
 // =====================
 const API_BASE = 'http://127.0.0.1:8000';
 const aiButton = document.getElementById('ai-describe');
-const aiAudioToggle = document.getElementById('ai-audio');
 const aiSpeed = document.getElementById('ai-speed');
 const aiOutput = document.getElementById('ai-description');
+const aiDescriptionContainer = document.getElementById('ai-description-container');
+let isAudioOn = true; // Audio ist immer aktiviert
+let isSpeaking = false; // aktueller Wiedergabestatus
+const transcriptCheckbox = document.getElementById('transcript-checkbox');
+
+// Initialer Status in der Ausgabeleiste
+if (aiOutput) {
+    aiOutput.textContent = 'Audio-Transcript';
+}
+
+// Initialize transcript toggle state and wire change handler
+if (transcriptCheckbox && aiDescriptionContainer) {
+    // Sync checkbox with current visibility
+    transcriptCheckbox.checked = !aiDescriptionContainer.classList.contains('hidden');
+    transcriptCheckbox.addEventListener('change', () => {
+        aiDescriptionContainer.classList.toggle('hidden', !transcriptCheckbox.checked);
+    });
+}
+
+// Helfer: Button-Icon/Label aktualisieren
+function updateAIButtonVisuals(speaking) {
+    const btn = document.querySelector('.leaflet-control-ai .ai-main-btn');
+    if (!btn) return;
+    const icon = speaking ? 'speaker_mute_icon.png' : 'speaker_icon.png';
+    btn.innerHTML = `<img src="./images/${icon}" alt="" aria-hidden="true" width="18" height="18">`;
+    const label = speaking ? 'Stop Audiodescription' : 'Start Audiodescription';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+}
+
+// Stop audio function (togglable)
+function stopAudio() {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+        updateAIButtonVisuals(false);
+        console.log('Audio stopped');
+    }
+}
 
 async function captureMapAsDataUrl() {
     const mapEl = document.getElementById('map');
@@ -398,10 +436,14 @@ async function captureMapAsDataUrl() {
     return canvas.toDataURL('image/png');
 }
 
+function getSpeed() {
+    return aiSpeed ? (parseFloat(aiSpeed.value) || 1.0) : 1.0;
+}
+
 async function requestDescription(imageDataUrl) {
     const body = {
         data_url: imageDataUrl,
-        speed: parseFloat(aiSpeed.value) || 1.0,
+        speed: getSpeed(),
         voice: 'random',
         response_type: 'text',
         skip_openai: false
@@ -417,29 +459,189 @@ async function requestDescription(imageDataUrl) {
 
 function speak(text) {
     if (!('speechSynthesis' in window)) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = parseFloat(aiSpeed.value) || 1.0;
-    // Use a locale-appropriate voice if available
-    const deVoices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.toLowerCase().startsWith('de'));
-    if (deVoices.length) u.voice = deVoices[0];
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
+    
+    // Wait for voices to load, then speak
+    const doSpeak = () => {
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = getSpeed();
+        u.lang = 'en-US'; // Set language to English
+        
+        // Get all available voices
+        const voices = speechSynthesis.getVoices();
+        console.log('Alle verfügbaren Stimmen:', voices.length);
+        
+        // Filter English voices
+        const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+        console.log('Englische Stimmen gefunden:', enVoices.length);
+        
+        if (enVoices.length > 0) {
+            // Chrome-optimized: Prefer Google voices with specific priority
+            // 1. Google US English (natural sounding)
+            let selectedVoice = enVoices.find(v => v.name.includes('Google US English'));
+            
+            // 2. Any Google UK English
+            if (!selectedVoice) {
+                selectedVoice = enVoices.find(v => v.name.includes('Google UK English'));
+            }
+            
+            // 3. Any other Google voice
+            if (!selectedVoice) {
+                selectedVoice = enVoices.find(v => v.name.toLowerCase().includes('google'));
+            }
+            
+            // 4. Fallback: First available English voice
+            if (!selectedVoice) {
+                selectedVoice = enVoices[0];
+            }
+            
+            u.voice = selectedVoice;
+            console.log('Verwende Stimme:', selectedVoice.name, '(' + selectedVoice.lang + ')');
+        } else {
+            console.warn('Keine englischen Stimmen gefunden! Verwende Standard-Stimme.');
+        }
+        
+        console.log('Geschwindigkeit:', u.rate);
+        
+        // Begin speaking
+        window.speechSynthesis.cancel();
+        isSpeaking = true;
+        updateAIButtonVisuals(true);
+        // Reset visuals when done or error
+        u.onend = () => { isSpeaking = false; updateAIButtonVisuals(false); };
+        u.onerror = () => { isSpeaking = false; updateAIButtonVisuals(false); };
+        window.speechSynthesis.speak(u);
+    };
+    
+    // Chrome needs time to load voices
+    const voices = speechSynthesis.getVoices();
+    if (voices.length === 0) {
+        // Wait for voices to load
+        speechSynthesis.onvoiceschanged = () => {
+            doSpeak();
+        };
+    } else {
+        doSpeak();
+    }
 }
 
-aiButton?.addEventListener('click', async () => {
-    aiButton.disabled = true;
-    aiButton.textContent = 'Beschreibe…';
-    aiOutput.textContent = 'Die Karte wird analysiert…';
+async function describeCurrentMap(startBtn) {
+    const btn = startBtn || aiButton;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Beschreibe…';
+    }
+    aiOutput.textContent = 'Loading Audio-Transcript...';
     try {
         const dataUrl = await captureMapAsDataUrl();
         const result = await requestDescription(dataUrl);
         const text = result?.text_data?.message || 'Keine Beschreibung verfügbar.';
         aiOutput.textContent = text;
-        if (aiAudioToggle?.checked) speak(text);
+        if (isAudioOn) speak(text);
     } catch (err) {
         aiOutput.textContent = `Fehler: ${err.message}`;
     } finally {
-        aiButton.disabled = false;
-        aiButton.textContent = 'Beschreibung abrufen';
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Beschreibung abrufen';
+        }
+    }
+}
+
+// Sidebar button wiring (falls vorhanden)
+aiButton?.addEventListener('click', () => {
+    if (isSpeaking) {
+        stopAudio();
+    } else {
+        describeCurrentMap(aiButton);
     }
 });
+
+// Leaflet AI control (hover to expand)
+const AIDescribeControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function() {
+        const container = L.DomUtil.create('div', 'leaflet-control leaflet-bar leaflet-control-ai');
+
+        // Prevent map interactions when using control
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.disableScrollPropagation(container);
+
+    const mainBtn = L.DomUtil.create('a', 'ai-main-btn', container);
+        mainBtn.href = '#';
+    mainBtn.title = 'Describe Map with Audio';
+    mainBtn.setAttribute('aria-label', 'Describe Map with Audio');
+    mainBtn.innerHTML = '<img src="./images/speaker_icon.png" alt="" aria-hidden="true" width="18" height="18">';
+
+    const panel = L.DomUtil.create('div', 'ai-panel', container);
+
+        // Eine Zeile: Toggle links, Button rechts
+        const row = L.DomUtil.create('div', 'ai-row', panel);
+
+        // Audio toggle (reusing switch style)
+        const toggleWrap = L.DomUtil.create('div', 'ai-audio-toggle', row);
+        const label = L.DomUtil.create('label', 'switch', toggleWrap);
+        label.setAttribute('aria-label', 'Audioausgabe ein/aus');
+        const checkbox = L.DomUtil.create('input', '', label);
+        checkbox.type = 'checkbox';
+        checkbox.checked = isAudioOn;
+        const slider = L.DomUtil.create('span', 'slider round', label);
+
+        // Start button
+        const startBtn = L.DomUtil.create('button', 'ai-start-btn', row);
+        startBtn.type = 'button';
+        startBtn.textContent = 'Audiobeschreibung abrufen';
+        startBtn.setAttribute('aria-label', 'Start Audiodescription');
+
+        // Events: Nur verhindern, dass der Link scrollt; Anzeige rein via CSS :hover
+        mainBtn.addEventListener('click', (e) => { e.preventDefault(); });
+        startBtn.addEventListener('click', async () => { await describeCurrentMap(startBtn); });
+        checkbox.addEventListener('change', (e) => {
+            isAudioOn = !!e.target.checked;
+        });
+
+        return container;
+    }
+});
+
+// Add control to map
+map.addControl(new AIDescribeControl({ position: 'topleft' }));
+
+// Reorder controls: place the speaker button above the layers control
+try {
+    const corner = document.querySelector('.leaflet-top.leaflet-left');
+    const aiCtrl = document.querySelector('.leaflet-control-ai');
+    const layersCtrl = document.querySelector('.leaflet-control-layers');
+    if (corner && aiCtrl) {
+        corner.insertBefore(aiCtrl, layersCtrl || corner.firstChild);
+    }
+} catch (e) {
+    console.debug('AI control reorder skipped:', e);
+}
+
+// Update AI button functionality
+const aiMainButton = document.querySelector('.leaflet-control-ai .ai-main-btn');
+// Toggle: Start/Stop per Klick
+aiMainButton.addEventListener('click', () => {
+    if (isSpeaking) {
+        stopAudio();
+    } else {
+        describeCurrentMap();
+    }
+});
+
+// Initiale Visuals setzen
+updateAIButtonVisuals(false);
+
+// Preload voices for Chrome
+if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged = () => {
+        const voices = speechSynthesis.getVoices();
+        const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+        console.log('Stimmen geladen:', voices.length, 'gesamt, davon', enVoices.length, 'englisch');
+        const googleVoices = enVoices.filter(v => v.name.toLowerCase().includes('google'));
+        if (googleVoices.length > 0) {
+            console.log('Verfügbare Google-Stimmen:', googleVoices.map(v => v.name));
+        }
+    };
+}
