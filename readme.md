@@ -2,6 +2,11 @@
 
 Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine kleine FastAPI-Backend-API, die einen Screenshot der Karte an ein lokal laufendes Vision‑Language‑Modell (Ollama) sendet. Damit erzeugt der Button „Beschreibung abrufen“ eine kurze, verständliche Textbeschreibung der aktuell sichtbaren Karte und kann sie optional per Browser‑Sprachausgabe vorlesen.
 
+## TODO
+
+- Simplified Map überarbeiten
+- 
+
 ## Inhalt
 
 - Frontend: `index.html`, `script.js`, `style.css`, Daten und Plugins
