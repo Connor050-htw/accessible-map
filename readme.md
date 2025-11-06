@@ -5,6 +5,7 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 ## Inhalt
 
 - Frontend: `index.html`, `script.js`, `style.css`, Daten und Plugins
+- Mapbox Key eintragen
 - Backend (lokal): `map-to-speech-demo/api/`
 - Beispiel‑GeoJSON‑Daten: `data/austriancastles.geojson`
 

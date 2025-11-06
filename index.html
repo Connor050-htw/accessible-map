@@ -12,6 +12,10 @@
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <!-- Mapbox GL JS for 3D buildings -->
+        <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
+        <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+        <script src='https://unpkg.com/mapbox-gl-leaflet@0.0.16/leaflet-mapbox-gl.js'></script>
     </head>
     <body>
         <!-- skip to map link -->
@@ -28,6 +32,14 @@
         </header>
         <main>
             <div id="map" aria-roledescription="Map of Castles in Austria" role="group" aria-label="Map" aria-describedby="keyboard-shortcuts">
+                    <!-- Compass Control -->
+                    <div id="compass" class="compass-control" role="button" tabindex="0" 
+                         aria-label="Reset map rotation to North" 
+                         title="Click to reset rotation (North up)">
+                        <span class="compass-label north">N</span>
+                        <span class="compass-arrow" id="compass-arrow">↑</span>
+                    </div>
+                
                 <div id="keyboard-shortcuts" style="display: none;">
                     To navigate the map with the keyboard, use the following shortcuts.
                     Left arrow, Move left.
@@ -37,6 +49,7 @@
                     Plus key, Zoom in.
                     Minus key, Zoom out.
                     Hold Shift key and F key to search for a castle.
+                    In 3D view, hold Shift and use the Arrow keys to change the viewing angle.
                     When screen reader is active hold Shift key to pan the map with arrow keys.
                 </div>
                 <div id="shortcuts-wrapper">
@@ -80,6 +93,21 @@
                                 <td><kbd aria-label="Shift key">Shift</kbd> + <kbd aria-label="F key">F</kbd></td>
                                 <td aria-label="Search for a castle.">Search for a castle</td>
                             </tr>
+                            <tr>
+                                <td>
+                                    <span style="display:inline-flex; align-items:center; gap:.3rem;">
+                                        <kbd aria-label="Shift key">Shift</kbd>
+                                        <span aria-hidden="true">+</span>
+                                        <span aria-label="Arrow keys" style="display:inline-flex; gap:.25rem;">
+                                            <kbd aria-hidden="true">↑</kbd>
+                                            <kbd aria-hidden="true">↓</kbd>
+                                            <kbd aria-hidden="true">←</kbd>
+                                            <kbd aria-hidden="true">→</kbd>
+                                        </span>
+                                    </span>
+                                </td>
+                                <td aria-label="In 3D view, change the viewing angle.">In 3D view: change view angle</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -101,59 +129,87 @@
                     Austria is home to many castles. Some of the most famous castles in Austria are Hohenwerfen Castle, Hochosterwitz Castle, and Schloss Ort. Explore the map to find more castles in Austria.
                 </p>
             </div>
-            <div id="map-config" tabindex="0" role="group" aria-label="Map configuration">
-                <h2>Map Configuration</h2>
-                <!-- increase or decrease font size -->
-                 <div class="font-setting config">
-                     <p aria-label="Font Size">Font Size</p>
-                     <span>
-                        <button id="increase-font-size" aria-label="Increase font size" title="Increase font size">A+</button>
-                        <button id="decrease-font-size" aria-label="Decrease font size" title="Decrease font size">A-</button>
-                    </span>
-                 </div>
-                <!-- high contrast mode -->
-                 <div class="contrast config">
-                    <p>High Contrast Mode</p>
-                    <label for="contrast-checkbox" class="switch">High Contrast Mode
-                        <input type="checkbox" aria-label="High Contrast Mode" id="contrast-checkbox">
-                        <span class="slider round"></span>
-                    </label>
-                 </div>
-                <!-- display castle names -->
-                 <div class="labels config">
-                    <p>Display castle names</p>
-                    <label for="labels-checkbox" class="switch">Display castle names
-                        <input type="checkbox" aria-label="Show castle names on map" id="labels-checkbox">
-                        <span class="slider round"></span>
-                    </label>
-                 </div>
-                 <!-- audio transcript toggle -->
-                 <div class="transcript config">
-                    <p>Show audio transcript</p>
-                    <label for="transcript-checkbox" class="switch">Audio transcript
-                        <input type="checkbox" aria-label="Show audio transcript bar" id="transcript-checkbox">
-                        <span class="slider round"></span>
-                    </label>
-                 </div>
-                <!-- basemap selector -->
-                 <div class="basemaps" tabindex="0" role="group" aria-labelledby="basemap-selector">
-                    <p id="basemap-selector">Select background map style</p>
-                    <div id="basemap-select" aria-label="Select background map style">
-                        <button class="basemap-selector-button" aria-label="OpenStreetMap"><img src="./images/osm.png" alt=""></button>
-                        <button class="basemap-selector-button" aria-label="OpenStreetMap.HOT"><img src="./images/hot.png" alt=""></button>
-                        <button class="basemap-selector-button" aria-label="MapTiler Dataviz"><img src="./images/maptilerdataviz.png" alt=""></button>
-                        <button class="basemap-selector-button" aria-label="MapTiler Toner"><img src="./images/maptilertoner.png" alt=""></button>
-                        <button class="basemap-selector-button" aria-label="Jawg Light"><img src="./images/jawglight.png" alt=""></button>
-                        <button class="basemap-selector-button" aria-label="Jawg Dark"><img src="./images/jawgdark.png" alt=""></button>
-                    </div>
-                 </div>
-
-                 
+            <div id="map-config" tabindex="0" role="group" aria-labelledby="map-config-heading">
+                <div class="section-header">
+                    <h2 id="map-config-heading">Map Configuration</h2>
+                    <button id="map-config-toggle" class="section-toggle" aria-controls="map-config-content" aria-expanded="false" title="Expand / Reduce">
+                        <span class="arrow" aria-hidden="true">▸</span>
+                        <span class="visually-hidden">Toggle Map Configuration</span>
+                    </button>
+                </div>
+                <div id="map-config-content" class="section-content hidden">
+                    <!-- increase or decrease font size -->
+                     <div class="font-setting config">
+                         <p aria-label="Font Size">Font Size</p>
+                         <span>
+                            <button id="increase-font-size" aria-label="Increase font size" title="Increase font size">A+</button>
+                            <button id="decrease-font-size" aria-label="Decrease font size" title="Decrease font size">A-</button>
+                        </span>
+                     </div>
+                    <!-- high contrast mode -->
+                     <div class="contrast config">
+                        <p>High Contrast Mode</p>
+                        <label for="contrast-checkbox" class="switch">High Contrast Mode
+                            <input type="checkbox" aria-label="High Contrast Mode" id="contrast-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                     </div>
+                    <!-- display castle names -->
+                     <div class="labels config">
+                        <p>Display castle names</p>
+                        <label for="labels-checkbox" class="switch">Display castle names
+                            <input type="checkbox" aria-label="Show castle names on map" id="labels-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                     </div>
+                     <!-- simplified map mode -->
+                     <div class="simplified-map config">
+                        <p>Simplified map view</p>
+                        <label for="simplified-checkbox" class="switch">Simplified map
+                            <input type="checkbox" aria-label="Enable simplified map view with reduced details" id="simplified-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                     </div>
+                     <!-- 3D view toggle -->
+                     <div class="3d-view config">
+                        <p>Enable 3D view</p>
+                        <label for="3d-view-checkbox" class="switch">Enable 3D view
+                            <input type="checkbox" aria-label="Enable 3D perspective view of the map" id="3d-view-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                     </div>
+                     <!-- audio transcript toggle -->
+                     <div class="transcript config">
+                        <p>Show audio transcript</p>
+                        <label for="transcript-checkbox" class="switch">Audio transcript
+                            <input type="checkbox" aria-label="Show audio transcript bar" id="transcript-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                     </div>
+                    <!-- basemap selector -->
+                     <div class="basemaps" tabindex="0" role="group" aria-labelledby="basemap-selector">
+                        <p id="basemap-selector">Select background map style</p>
+                        <div id="basemap-select" aria-label="Select background map style">
+                            <button class="basemap-selector-button" aria-label="OpenStreetMap"><img src="./images/osm.png" alt=""></button>
+                            <button class="basemap-selector-button" aria-label="OpenStreetMap.HOT"><img src="./images/hot.png" alt=""></button>
+                            <button class="basemap-selector-button" aria-label="MapTiler Dataviz"><img src="./images/maptilerdataviz.png" alt=""></button>
+                            <button class="basemap-selector-button" aria-label="MapTiler Toner"><img src="./images/maptilertoner.png" alt=""></button>
+                            <button class="basemap-selector-button" aria-label="Jawg Light"><img src="./images/jawglight.png" alt=""></button>
+                            <button class="basemap-selector-button" aria-label="Jawg Dark"><img src="./images/jawgdark.png" alt=""></button>
+                        </div>
+                     </div>
+                </div>
             </div>
             <!-- Symbols and meanings -->
-            <div aria-hidden="true">
-                <h2>Symbols and Meanings</h2>
-                <div id="symbols">
+            <div id="symbols-section" role="group" aria-labelledby="symbols-heading">
+                <div class="section-header">
+                    <h2 id="symbols-heading">Symbols and Meanings</h2>
+                    <button id="symbols-toggle" class="section-toggle" aria-controls="symbols" aria-expanded="true" title="Expand / Reduce">
+                        <span class="arrow" aria-hidden="true">▾</span>
+                        <span class="visually-hidden">Toggle Symbols and Meanings</span>
+                    </button>
+                </div>
+                <div id="symbols" class="section-content hidden">
                     <div class="symbol">
                         <span>+</span>
                         <p>Zoom in map</p>
@@ -186,6 +242,8 @@
         <!-- html2canvas für Screenshot der Leaflet-Karte -->
         <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
         <script src="plugins/pinsearch/Leaflet.PinSearch.js" type="module"></script>
+        <!-- Local config with MAPBOX_TOKEN (ignored by git). Provide your token in mapbox-config.js -->
+        <script src="mapbox-config.js"></script>
         <script src="script.js" type="module"></script>
     </body>
 </html>

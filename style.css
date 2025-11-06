@@ -215,6 +215,47 @@ aside {
         padding: 0.8rem 0;
     }
 
+    /* Collapsible section header */
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        cursor: pointer; /* whole row clickable */
+    }
+
+    /* Small black arrow button */
+    .section-toggle {
+        background: transparent;
+        border: none;
+        color: #000;
+        cursor: pointer;
+        min-width: 32px;   /* larger click target */
+        min-height: 32px;  /* larger click target */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 1;
+    }
+
+    /* Bigger arrow glyph */
+    .section-toggle .arrow {
+        font-size: 35px;   /* increase visual size of arrow */
+        font-weight: 700;
+    }
+
+    /* Indicate clickable headings for toggling */
+    .clickable-heading {
+        cursor: pointer;
+    }
+
+    .section-toggle:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+        border-radius: 3px;
+    }
+
     .font-setting button {
         padding: 0.5rem 1rem;
         background-color: #1900ff;
@@ -399,6 +440,14 @@ aside {
 
 }
 
+/* Screen-reader only text */
+.visually-hidden {
+    position: absolute !important;
+    height: 1px; width: 1px; overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap; /* added line */
+}
+
 #shortcuts-button {
     background-color: transparent;
     border: none;
@@ -438,6 +487,17 @@ aside {
     background-color: black;
 }
 
+/* 3D buildings are handled by OSM Buildings library, CSS transforms removed */
+
+/* Simplified map mode - reduce visual clutter */
+#map.simplified-map .leaflet-tile-pane {
+    filter: saturate(0.3) brightness(1.15) contrast(0.85);
+}
+
+#map.simplified-map .leaflet-tile-container {
+    opacity: 0.7;
+}
+
 
 .leaflet-popup-content img {
     width: 290px;
@@ -461,7 +521,7 @@ aside {
     margin-left: 360px;
     margin-right: 10px;
     z-index: 5000;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     color: #fff;
     padding: 10px 12px;
     border-radius: 6px;
@@ -532,6 +592,55 @@ aside {
 .leaflet-control-ai .switch .slider { border-radius: 24px; }
 .leaflet-control-ai .switch .slider:before { width: 18px; height: 18px; left: 3px; bottom: 3px; border-radius: 50%; }
 .leaflet-control-ai .switch input:checked + .slider:before { transform: translateX(18px); }
+
+/* Compass Control */
+.compass-control {
+    position: absolute;
+    top: 10px; /* align with zoom control */
+    left: 52px; /* place to the right of zoom buttons (approx width 42px + margin) */
+    width: 60px;
+    height: 60px;
+    background: white;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.compass-control:hover {
+    background: #f4f4f4;
+    transform: scale(1.05);
+}
+
+.compass-control.visible {
+    display: flex;
+}
+
+.compass-arrow {
+    font-size: 28px;
+    font-weight: bold;
+    color: #e53935;
+    transition: transform 0.3s ease;
+    user-select: none;
+}
+
+.compass-label {
+    position: absolute;
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+.compass-label.north {
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}
 
 /* About page */
 #about-body {

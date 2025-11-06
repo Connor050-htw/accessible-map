@@ -57,6 +57,18 @@ var map = L.map('map',
     }
 ).setView([47.69, 13.38], 7);
 
+// Mapbox configuration for 3D buildings
+// The token is loaded from mapbox-config.js (global window.MAPBOX_TOKEN)
+const MAPBOX_TOKEN = (typeof window !== 'undefined' && window.MAPBOX_TOKEN) ? window.MAPBOX_TOKEN : 'YOUR_MAPBOX_TOKEN';
+
+// Mapbox 3D layer - will be initialized on demand
+var mapbox3DLayer = null;
+var buildings3DEnabled = false;
+
+// Store references to POI markers and labels for hiding/showing in 3D mode
+var poiMarkers = [];
+var poiLabels = [];
+
 // Add data to map
 fetch('./data/austriancastles.geojson')
     .then(response => response.json())
@@ -76,7 +88,9 @@ fetch('./data/austriancastles.geojson')
                     alt: castle.properties.name,
                     //icon: L.icon({iconUrl: './images/circle-castle-icon.png', iconSize: [28, 41]}),
                 };
-                return L.marker(latlng, markerOptions);
+                const marker = L.marker(latlng, markerOptions);
+                poiMarkers.push(marker); // Store marker reference
+                return marker;
             },
 
             onEachFeature: function (castle, layer) {
@@ -94,9 +108,11 @@ fetch('./data/austriancastles.geojson')
                     html: castle.properties.name,
                 });
 
-                L.marker([castle.geometry.coordinates[1], castle.geometry.coordinates[0]], {
+                const labelMarker = L.marker([castle.geometry.coordinates[1], castle.geometry.coordinates[0]], {
                     icon: label
                 }).addTo(map);
+                
+                poiLabels.push(labelMarker); // Store label reference
 
                 // focus leaflet-popup on marker click
                 layer.on('click', focusPopup);
@@ -153,7 +169,7 @@ map.on('exitFullscreen', function () {
 });
 
 // Add layer control (kept here so sidebar basemap bindings find it in DOM)
-L.control.layers(baseMaps).setPosition('topleft').addTo(map);
+var layerControl = L.control.layers(baseMaps).setPosition('topleft').addTo(map);
 
 // Add keyboard shortcuts to attribution control
 map.attributionControl.addAttribution(
@@ -254,8 +270,20 @@ function closeShortcuts() {
     wrapper.style.display = 'none';
 }
 
-shortcutsButton.addEventListener('click', showShortcuts);
-document.getElementsByClassName('popup-close-button')[0].addEventListener('click', closeShortcuts);
+// Use event delegation so the handler survives DOM changes (e.g., after 3D toggle)
+document.addEventListener('click', (e) => {
+    const openBtn = e.target.closest('#shortcuts-button');
+    if (openBtn) {
+        e.preventDefault();
+        showShortcuts();
+        return;
+    }
+    const closeBtn = e.target.closest('.popup-close-button');
+    if (closeBtn) {
+        e.preventDefault();
+        closeShortcuts();
+    }
+});
 
 wrapper.addEventListener('click', function (event) {
     if (event.target === wrapper) {
@@ -320,30 +348,332 @@ labelsBtn.addEventListener('change', () => {
     : document.querySelectorAll('.label').forEach(label => label.style.display = 'none');
 });
 
+// Toggle 3D view (checked = enable 3D buildings via Mapbox)
+let view3DBtn = document.getElementById('3d-view-checkbox');
+let originalBasemap = null; // Store the current basemap
+let currentBasemapName = null; // Store which basemap was active
+
+view3DBtn.addEventListener('change', () => {
+    if (view3DBtn.checked) {
+        console.log('3D View aktiviert - Zoom Level:', map.getZoom());
+        
+        // Check if token is set
+        if (MAPBOX_TOKEN === 'YOUR_MAPBOX_TOKEN') {
+            alert('Bitte setze deinen Mapbox Access Token in script.js (Zeile 60).\n\nKostenlos erhältlich auf: https://account.mapbox.com/');
+            view3DBtn.checked = false;
+            return;
+        }
+        
+        buildings3DEnabled = true;
+        
+        if (!mapbox3DLayer) {
+            try {
+                // Set access token
+                mapboxgl.accessToken = MAPBOX_TOKEN;
+                
+                // Get current map state
+                const center = map.getCenter();
+                const zoom = Math.max(map.getZoom(), 15);
+                
+                // Store current basemap and remove all tile layers
+                map.eachLayer((layer) => {
+                    if (layer instanceof L.TileLayer) {
+                        originalBasemap = layer;
+                        // Find which basemap it is
+                        for (let [name, baseLayer] of Object.entries(baseMaps)) {
+                            if (baseLayer === layer) {
+                                currentBasemapName = name;
+                                break;
+                            }
+                        }
+                        map.removeLayer(layer);
+                        console.log('Leaflet Basemap entfernt:', currentBasemapName);
+                    }
+                });
+                
+                // Hide POI markers and labels in 3D mode
+                console.log('Verstecke', poiMarkers.length, 'POI-Marker und', poiLabels.length, 'Labels');
+                poiMarkers.forEach(marker => {
+                    if (map.hasLayer(marker)) {
+                        map.removeLayer(marker);
+                    }
+                });
+                poiLabels.forEach(label => {
+                    if (map.hasLayer(label)) {
+                        map.removeLayer(label);
+                    }
+                });
+                
+                // Create Mapbox GL layer with proper configuration
+                mapbox3DLayer = L.mapboxGL({
+                    accessToken: MAPBOX_TOKEN,
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    pane: 'tilePane',
+                    // Optimize for smooth panning after rotation
+                    interactive: true,
+                    dragRotate: true,
+                    pitchWithRotate: false,
+                    touchPitch: true,
+                    touchZoomRotate: true,
+                    // Performance optimizations
+                    updateInterval: 32, // ~30fps update rate for smoother rendering
+                    bearingSnap: 7, // Less snapping for smoother rotation
+                    renderWorldCopies: false, // Better performance
+                    // Enable canvas preservation for screenshots
+                    preserveDrawingBuffer: true
+                }).addTo(map);
+                
+                console.log('Mapbox 3D Layer hinzugefügt');
+                
+                // Wait for the mapbox map to be ready
+                setTimeout(() => {
+                    try {
+                        const mapboxMap = mapbox3DLayer.getMapboxMap();
+                        
+                        if (mapboxMap && mapboxMap.isStyleLoaded()) {
+                            console.log('Mapbox Style geladen, füge 3D-Gebäude hinzu...');
+                            add3DBuildings(mapboxMap);
+                        } else {
+                            mapboxMap.once('load', () => {
+                                console.log('Mapbox Map Load Event, füge 3D-Gebäude hinzu...');
+                                add3DBuildings(mapboxMap);
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Fehler beim Zugriff auf Mapbox Map:', e);
+                    }
+                }, 1000);
+                
+                // Zoom to appropriate level
+                if (map.getZoom() < 15) {
+                    console.log('Zooming to level 15 for 3D buildings');
+                    map.setZoom(15);
+                }
+                
+                    // Show compass
+                    showCompass();
+                
+            } catch (error) {
+                console.error('Fehler beim Laden von Mapbox 3D:', error);
+                alert('3D-Gebäude konnten nicht geladen werden: ' + error.message);
+                view3DBtn.checked = false;
+                buildings3DEnabled = false;
+            }
+        }
+    } else {
+        // Disable 3D buildings
+        buildings3DEnabled = false;
+        console.log('3D View deaktiviert');
+        
+        if (mapbox3DLayer) {
+            try {
+                map.removeLayer(mapbox3DLayer);
+                mapbox3DLayer = null;
+                console.log('Mapbox 3D Layer entfernt');
+                
+                // Restore original basemap
+                if (originalBasemap) {
+                    originalBasemap.addTo(map);
+                    console.log('Leaflet Basemap wiederhergestellt:', currentBasemapName);
+                } else if (currentBasemapName && baseMaps[currentBasemapName]) {
+                    // Fallback: add by name if reference was lost
+                    baseMaps[currentBasemapName].addTo(map);
+                    console.log('Leaflet Basemap via Name wiederhergestellt:', currentBasemapName);
+                } else {
+                    // Last resort: add default layer
+                    jawgLight.addTo(map);
+                    console.log('Default Basemap wiederhergestellt');
+                }
+                
+                // Show POI markers and labels again
+                console.log('Zeige', poiMarkers.length, 'POI-Marker und', poiLabels.length, 'Labels wieder an');
+                poiMarkers.forEach(marker => {
+                    if (!map.hasLayer(marker)) {
+                        marker.addTo(map);
+                    }
+                });
+                poiLabels.forEach(label => {
+                    if (!map.hasLayer(label)) {
+                        label.addTo(map);
+                    }
+                });
+                
+                // Trigger layer control update
+                map.fire('baselayerchange', { layer: originalBasemap || jawgLight });
+                
+                    // Hide compass
+                    hideCompass();
+                
+            } catch (error) {
+                console.error('Fehler beim Entfernen von Mapbox 3D:', error);
+            }
+        }
+    }
+});
+
+// Helper function to add 3D buildings to Mapbox map
+function add3DBuildings(mapboxMap) {
+    // Wait a bit for style to be fully loaded
+    if (!mapboxMap.isStyleLoaded()) {
+        console.log('Style noch nicht geladen, warte...');
+        mapboxMap.once('styledata', () => add3DBuildings(mapboxMap));
+        return;
+    }
+    
+    console.log('Füge 3D-Building Layer hinzu...');
+    
+    // Remove existing 3d-buildings layer if it exists
+    if (mapboxMap.getLayer('3d-buildings')) {
+        mapboxMap.removeLayer('3d-buildings');
+    }
+    
+    // Add 3D building layer
+    const layers = mapboxMap.getStyle().layers;
+    let labelLayerId;
+    for (let i = 0; i < layers.length; i++) {
+        if (layers[i].type === 'symbol' && layers[i].layout['text-field']) {
+            labelLayerId = layers[i].id;
+            break;
+        }
+    }
+    
+    mapboxMap.addLayer({
+        'id': '3d-buildings',
+        'source': 'composite',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 15,
+        'paint': {
+            'fill-extrusion-color': '#aaa',
+            'fill-extrusion-height': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                15,
+                0,
+                15.05,
+                ['get', 'height']
+            ],
+            'fill-extrusion-base': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                15,
+                0,
+                15.05,
+                ['get', 'min_height']
+            ],
+            'fill-extrusion-opacity': 0.8
+        }
+    }, labelLayerId);
+    
+    // Set initial pitch and bearing for 3D view
+    mapboxMap.setPitch(60);
+    mapboxMap.setBearing(-17.6);
+    
+    // Configure controls for better usability and performance
+    try {
+        // Ensure drag pan has priority and is smooth
+        if (mapboxMap.dragPan) {
+            mapboxMap.dragPan.enable();
+            // Disable inertia for more precise control (reduces jitter)
+            mapboxMap.dragPan.disable();
+            mapboxMap.dragPan.enable();
+        }
+        
+        // Disable double-click zoom to prevent conflicts
+        if (mapboxMap.doubleClickZoom) {
+            mapboxMap.doubleClickZoom.disable();
+        }
+        
+        // Enable rotation only with right-click or Ctrl+left-click
+        if (mapboxMap.dragRotate) {
+            mapboxMap.dragRotate.enable();
+            console.log('Drag rotate aktiviert (Rechtsklick oder Strg+Linksklick)');
+        }
+        
+        // Enable touch controls
+        if (mapboxMap.touchZoomRotate) {
+            mapboxMap.touchZoomRotate.enableRotation();
+            console.log('Touch rotation aktiviert');
+        }
+        if (mapboxMap.touchPitch) {
+            mapboxMap.touchPitch.enable();
+            console.log('Touch pitch aktiviert');
+        }
+        
+        // Smooth scrolling
+        if (mapboxMap.scrollZoom) {
+            mapboxMap.scrollZoom.setWheelZoomRate(1/200); // Smoother zoom
+        }
+        
+        // Keyboard shortcuts for rotation
+        if (mapboxMap.keyboard) {
+            mapboxMap.keyboard.enable();
+        }
+        
+        console.log('3D-Gebäude Layer erfolgreich hinzugefügt!');
+        console.log('Steuerung:');
+        console.log('- Linksklick+Ziehen: Karte verschieben (Pan)');
+        console.log('- Rechtsklick+Ziehen: Karte drehen/neigen');
+        console.log('- Strg+Linksklick+Ziehen: Alternative zum Drehen');
+        console.log('- Scroll: Zoom');
+    } catch (e) {
+        console.error('Fehler beim Aktivieren der 3D-Steuerung:', e);
+    }
+}
+
+// Toggle simplified map mode
+let simplifiedMapBtn = document.getElementById('simplified-checkbox');
+
+simplifiedMapBtn.addEventListener('change', () => {
+    const mapElement = document.getElementById('map');
+    if (simplifiedMapBtn.checked) {
+        mapElement.classList.add('simplified-map');
+    } else {
+        mapElement.classList.remove('simplified-map');
+    }
+});
+
 // Change basemap layer with basemap-selector-buttons
 const basemapSelectors = document.querySelectorAll('.basemap-selector-button');
-const basemapLayers = document.querySelectorAll('.leaflet-control-layers-selector');
 
+// Function to update basemap selection
+function updateBasemapSelection() {
+    const basemapLayers = document.querySelectorAll('.leaflet-control-layers-selector');
+    
+    basemapLayers.forEach((layer, index) => {
+        if (layer.checked && basemapSelectors[index]) {
+            basemapSelectors[index].classList.add('selected');
+        }
+    });
+}
+
+// Add click handlers to sidebar buttons
 basemapSelectors.forEach((selector, index) => {
-    selector.addEventListener('click', () => basemapLayers[index].click());
-});
-
-// Style basemap selector if basemapLayer is selected
-basemapLayers.forEach((layer, index) => {
-    if (layer.checked) {
-        basemapSelectors[index].classList.add('selected');
-    }
-
-    layer.addEventListener('change', () => {
-        basemapSelectors.forEach((selector, i) => {
-            if (i === index) {
-                selector.classList.add('selected');
-            } else {
-                selector.classList.remove('selected');
-            }
-        });
+    selector.addEventListener('click', () => {
+        // Re-query the layer control elements in case they changed
+        const basemapLayers = document.querySelectorAll('.leaflet-control-layers-selector');
+        if (basemapLayers[index]) {
+            basemapLayers[index].click();
+        }
     });
 });
+
+// Watch for layer changes and update visual selection
+map.on('baselayerchange', () => {
+    const basemapLayers = document.querySelectorAll('.leaflet-control-layers-selector');
+    basemapLayers.forEach((layer, index) => {
+        if (layer.checked && basemapSelectors[index]) {
+            basemapSelectors.forEach(sel => sel.classList.remove('selected'));
+            basemapSelectors[index].classList.add('selected');
+        }
+    });
+});
+
+// Initial update
+updateBasemapSelection();
 
 // Show / hide sidebar with .sidebarbutton
 let sidebarButton = document.getElementById('sidebar-button');
@@ -381,6 +711,64 @@ sidebarButton.addEventListener('keydown', (event) => {
 document.querySelectorAll('.label').forEach(label => label.setAttribute('aria-hidden', 'true'));
 
 export {focusPopup};
+
+// =====================
+// Collapsible sections (Map Configuration, Symbols)
+// =====================
+function setupCollapsible(toggleId, contentId) {
+    const btn = document.getElementById(toggleId);
+    const content = document.getElementById(contentId);
+    if (!btn || !content) return;
+
+    const header = btn.closest('.section-header');
+    const heading = header ? header.querySelector('h2') : null;
+
+    const applyState = (expanded) => {
+        btn.setAttribute('aria-expanded', String(expanded));
+        const arrowEl = btn.querySelector('.arrow');
+        if (arrowEl) arrowEl.textContent = expanded ? '▾' : '▸';
+        content.classList.toggle('hidden', !expanded);
+    };
+
+    const toggle = () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        applyState(!expanded);
+    };
+
+    // Click on the button toggles (and do not bubble to header to avoid double toggle)
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggle();
+    });
+
+    // Make heading keyboard-accessible to toggle
+    if (heading) {
+        heading.setAttribute('tabindex', '0');
+        heading.classList.add('clickable-heading');
+        heading.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggle();
+            }
+        });
+    }
+
+    // Click anywhere on the header row toggles (except when clicking the button itself)
+    if (header) {
+        header.addEventListener('click', (e) => {
+            if (e.target.closest('#' + toggleId)) return; // ignore clicks on the button
+            toggle();
+        });
+    }
+
+    // Ensure initial state matches aria-expanded
+    const initExpanded = btn.getAttribute('aria-expanded') === 'true';
+    applyState(initExpanded);
+}
+
+setupCollapsible('map-config-toggle', 'map-config-content');
+setupCollapsible('symbols-toggle', 'symbols');
 
 // =====================
 // AI Map Description
@@ -430,10 +818,38 @@ function stopAudio() {
 }
 
 async function captureMapAsDataUrl() {
+    // Check if 3D mode is active - if so, capture from Mapbox GL canvas
+    if (mapbox3DLayer && mapbox3DLayer._glMap) {
+        try {
+            console.log('3D mode detected, attempting to capture Mapbox GL canvas');
+            const glMap = mapbox3DLayer._glMap;
+            const glCanvas = glMap.getCanvas();
+            
+            if (glCanvas) {
+                // Wait a moment to ensure the canvas is fully rendered
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Try to get the image data directly from the canvas
+                const dataUrl = glCanvas.toDataURL('image/png');
+                console.log('Successfully captured from Mapbox GL canvas, data URL length:', dataUrl.length);
+                return dataUrl;
+            } else {
+                console.warn('Mapbox GL canvas not found');
+            }
+        } catch (error) {
+            console.error('Failed to capture Mapbox GL canvas:', error);
+            console.warn('Falling back to html2canvas');
+        }
+    }
+    
+    // Default: use html2canvas for 2D Leaflet view
+    console.log('Using html2canvas for 2D Leaflet map');
     const mapEl = document.getElementById('map');
     // html2canvas is loaded globally from CDN
     const canvas = await html2canvas(mapEl, { useCORS: true, backgroundColor: null, scale: 1 });
-    return canvas.toDataURL('image/png');
+    const dataUrl = canvas.toDataURL('image/png');
+    console.log('Successfully captured with html2canvas, data URL length:', dataUrl.length);
+    return dataUrl;
 }
 
 function getSpeed() {
@@ -645,3 +1061,74 @@ if ('speechSynthesis' in window) {
         }
     };
 }
+
+    // ===== Compass Control =====
+    const compass = document.getElementById('compass');
+    const compassArrow = document.getElementById('compass-arrow');
+    let compassUpdateInterval = null;
+
+    function showCompass() {
+        if (compass) {
+            compass.classList.add('visible');
+            startCompassTracking();
+        }
+    }
+
+    function hideCompass() {
+        if (compass) {
+            compass.classList.remove('visible');
+            stopCompassTracking();
+            // Reset arrow rotation
+            if (compassArrow) {
+                compassArrow.style.transform = 'rotate(0deg)';
+            }
+        }
+    }
+
+    function startCompassTracking() {
+        // Update compass every 100ms while in 3D mode
+        compassUpdateInterval = setInterval(() => {
+            if (mapbox3DLayer && mapbox3DLayer._glMap) {
+                const bearing = mapbox3DLayer._glMap.getBearing();
+                updateCompassRotation(bearing);
+            }
+        }, 100);
+    }
+
+    function stopCompassTracking() {
+        if (compassUpdateInterval) {
+            clearInterval(compassUpdateInterval);
+            compassUpdateInterval = null;
+        }
+    }
+
+    function updateCompassRotation(bearing) {
+        if (compassArrow) {
+            // Rotate arrow opposite to map bearing so it always points north
+            compassArrow.style.transform = `rotate(${-bearing}deg)`;
+        }
+    }
+
+    function resetMapRotation() {
+        if (mapbox3DLayer && mapbox3DLayer._glMap) {
+            const mapboxMap = mapbox3DLayer._glMap;
+            // Smoothly rotate back to north
+            mapboxMap.easeTo({
+                bearing: 0,
+                pitch: 60,
+                duration: 800
+            });
+            console.log('Map rotation reset to North');
+        }
+    }
+
+    // Compass click handler - reset rotation
+    if (compass) {
+        compass.addEventListener('click', resetMapRotation);
+        compass.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                resetMapRotation();
+            }
+        });
+    }
