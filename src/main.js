@@ -66,37 +66,57 @@ async function initializeApp() {
         fullscreenElement: false
     }).addTo(map);
     
-    // 7. Initialize settings
+    // 7. Add search control (PinSearch plugin)
+    if (typeof L.control.pinSearch !== 'undefined') {
+        const pinLabels = [];
+        map.eachLayer((layer) => {
+            if (layer instanceof L.Marker && layer.options.title) {
+                pinLabels.push(layer.options.title);
+            }
+        });
+        
+        L.control.pinSearch({
+            position: 'topright',
+            placeholder: 'Search castles',
+            maxSearchResults: 5,
+            onSearch: (query) => {
+                console.log('Searching for:', query);
+            },
+            markerLabels: pinLabels
+        }).addTo(map);
+    }
+    
+    // 8. Initialize settings
     initializeSettings(map);
     
-    // 8. Initialize UI components
+    // 9. Initialize UI components
     initializeSidebar(map);
     setupBasemapSelectors(map);
     initializeKeyboardShortcuts();
     initializeDocumentShortcuts();
     
-    // 9. Initialize accessibility features
+    // 10. Initialize accessibility features
     initializeAccessibility();
     
-    // 10. Initialize compass control
+    // 11. Initialize compass control
     initializeCompass();
     
-    // 11. Initialize AI control
+    // 12. Initialize AI control
     initializeAIControl(map);
     
-    // 12. Setup collapsible sections
+    // 13. Setup collapsible sections
     setupCollapsible('map-config-toggle', 'map-config-content');
     setupCollapsible('symbols-toggle', 'symbols');
     
-    // 13. Initialize 3D mode toggle
+    // 14. Initialize 3D mode toggle
     initialize3DToggle(map);
     
-    // 14. Setup basemap change handler for 3D mode
+    // 15. Setup basemap change handler for 3D mode
     map.on('baselayerchange', (e) => {
         handle3DBasemapChange(e);
     });
     
-    // 15. Export focusPopup for use by PinSearch plugin
+    // 16. Export focusPopup for use by PinSearch plugin
     window.focusPopup = focusPopup;
     
     console.log('Accessible Map initialized successfully!');
