@@ -35,11 +35,6 @@ main .label {
     background-color: black;
 }
 
-/* Simplified map mode - reduce visual clutter */
-#map.simplified-map .leaflet-tile-pane {
-    filter: saturate(0.3) brightness(1.15) contrast(0.85);
-}
+/* Simplified map mode removed */
 
-#map.simplified-map .leaflet-tile-container {
-    opacity: 0.7;
-}
+/* LOD visual filters removed: we switch tile styles instead */

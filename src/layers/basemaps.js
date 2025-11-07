@@ -44,6 +44,26 @@ export const jawgDark = L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}{
     attribution: '<a href="https://www.jawg.io?utm_medium=map&utm_source=attribution" aria-label="Jawg attribution. Opens in a new tab" target="_blank">&copy; Jawg</a> - <a href="https://www.openstreetmap.org?utm_medium=map-attribution&utm_source=jawg" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap</a>&nbsp;contributors'
 });
 
+// Coarse / low-detail styles (using existing providers with simpler aesthetics)
+// These are optional variants to use for lower LOD in 2D without filter hacks.
+export const osmMono = L.tileLayer(`https://api.maptiler.com/maps/toner-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
+    maxZoom: 19,
+    crossOrigin: true,
+    attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+});
+
+export const osmLightBase = L.tileLayer(`https://api.maptiler.com/maps/basic/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
+    maxZoom: 19,
+    crossOrigin: true,
+    attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+});
+
+export const osmBright = L.tileLayer(`https://api.maptiler.com/maps/bright/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
+    maxZoom: 19,
+    crossOrigin: true,
+    attribution: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+});
+
 // Basemap collection for layer control
 export const baseMaps = {
     "OpenStreetMap": osm,
@@ -52,6 +72,22 @@ export const baseMaps = {
     "MapTiler Toner": mtLayerToner,
     "Jawg Light": jawgLight,
     "Jawg Dark": jawgDark
+};
+
+// Mapping LOD level -> suggested basemap key (used for coarse switching)
+export const lodBasemapMap = {
+    0: 'MapTiler Toner',      // very stark, minimal detail perception
+    1: 'basic',               // we map to osmLightBase tile layer directly (not in control) 
+    2: 'MapTiler Dataviz',    // mid detail
+    3: 'Jawg Light'           // full detail default
+};
+
+// Provide direct access for non-control variants
+export const lodExtraLayers = {
+    'basic': osmLightBase,
+    'bright': osmBright,
+    'toner': mtLayerToner,
+    'mono': osmMono
 };
 
 /**

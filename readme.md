@@ -4,7 +4,7 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 
 ## TODO
 
-- Simplified Map überarbeiten
+<!-- Simplified Map feature removed during refactoring -->
 - Ziehen im 3D bei gedrehter Karte klappt nicht
 
 ## Inhalt

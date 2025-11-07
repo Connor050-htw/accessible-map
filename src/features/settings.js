@@ -75,23 +75,6 @@ export function initializeLabelToggle() {
     }
 }
 
-/**
- * Initialize simplified map mode toggle
- */
-export function initializeSimplifiedMapMode() {
-    const simplifiedMapBtn = document.getElementById('simplified-checkbox');
-
-    if (simplifiedMapBtn) {
-        simplifiedMapBtn.addEventListener('change', () => {
-            const mapElement = document.getElementById('map');
-            if (simplifiedMapBtn.checked) {
-                mapElement.classList.add('simplified-map');
-            } else {
-                mapElement.classList.remove('simplified-map');
-            }
-        });
-    }
-}
 
 /**
  * Initialize all settings
@@ -101,5 +84,4 @@ export function initializeSettings(map) {
     initializeFontSizeControls();
     initializeHighContrastMode(map);
     initializeLabelToggle();
-    initializeSimplifiedMapMode();
 }

@@ -13,6 +13,8 @@ let mapbox3DLayer = null;
 let buildings3DEnabled = false;
 let originalBasemap = null;
 let currentBasemapName = null;
+// Exported LOD callback (set by lod.js) to reapply after style switches
+let _reapplyLOD = null;
 
 /**
  * Map Leaflet basemap names to Mapbox GL style URLs
@@ -252,6 +254,10 @@ export function handle3DBasemapChange(event) {
                         glMap.setBearing(currentBearing);
                         glMap.setZoom(currentZoom);
                         glMap.setCenter(currentCenter);
+                        // Reapply LOD adjustments if provided
+                        if (typeof _reapplyLOD === 'function') {
+                            _reapplyLOD();
+                        }
                     } catch (err) {
                         console.error('Error adding 3D buildings after style switch:', err);
                     }
@@ -262,4 +268,25 @@ export function handle3DBasemapChange(event) {
     } catch (err) {
         console.error('Basemap switch in 3D mode failed:', err);
     }
+}
+
+/**
+ * Get underlying Mapbox GL Map instance (if 3D active)
+ * @returns {import('mapbox-gl').Map|null}
+ */
+export function getMapboxGLMap() {
+    if (!mapbox3DLayer) return null;
+    try {
+        return (typeof mapbox3DLayer.getMapboxMap === 'function') ? mapbox3DLayer.getMapboxMap() : mapbox3DLayer._glMap || null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Allow LOD module to register a callback to reapply its state after style changes.
+ * @param {Function} fn
+ */
+export function registerLODReapplyCallback(fn) {
+    _reapplyLOD = fn;
 }
