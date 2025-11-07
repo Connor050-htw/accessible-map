@@ -162,14 +162,6 @@
                             <span class="slider round"></span>
                         </label>
                      </div>
-                     <!-- simplified map mode -->
-                     <div class="simplified-map config">
-                        <p>Simplified map view</p>
-                        <label for="simplified-checkbox" class="switch">Simplified map
-                            <input type="checkbox" aria-label="Enable simplified map view with reduced details" id="simplified-checkbox">
-                            <span class="slider round"></span>
-                        </label>
-                     </div>
                      <!-- 3D view toggle -->
                      <div class="3d-view config">
                         <p>Enable 3D view</p>
@@ -177,6 +169,18 @@
                             <input type="checkbox" aria-label="Enable 3D perspective view of the map" id="3d-view-checkbox">
                             <span class="slider round"></span>
                         </label>
+                     </div>
+                     <!-- Level of Detail slider -->
+                     <div class="lod-control config">
+                        <p>Map detail level</p>
+                        <div class="lod-slider-container">
+                            <input type="range" id="lod-range" min="0" max="2" step="1" value="2" aria-label="Adjust map level of detail">
+                            <div class="lod-labels">
+                                <span>Low</span>
+                                <span>Medium</span>
+                                <span>High</span>
+                            </div>
+                        </div>
                      </div>
                      <!-- audio transcript toggle -->
                      <div class="transcript config">

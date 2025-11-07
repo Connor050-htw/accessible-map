@@ -4,45 +4,14 @@
  */
 
 import { MAPBOX_TOKEN, MAPTILER_KEY, JAWG_ACCESS_TOKEN } from '../core/config.js';
-import { baseMaps } from '../layers/basemaps.js';
+import { baseMaps, getGLMapFromLayer } from '../layers/basemaps.js';
 import { add3DBuildings } from '../layers/3d-buildings.js';
 import { hidePOIMarkers, showPOIMarkers } from '../layers/poi-markers.js';
+import { applyLOD } from './lod-control.js';
 
 // State management
-let mapbox3DLayer = null;
 let buildings3DEnabled = false;
-let originalBasemap = null;
-let currentBasemapName = null;
-
-/**
- * Map Leaflet basemap names to Mapbox GL style URLs
- * @param {string} name - Basemap name
- * @returns {string} Mapbox GL style URL
- */
-function get3DStyleForBasemap(name) {
-    const mapboxLight = 'mapbox://styles/mapbox/light-v11';
-    const mapboxStreets = 'mapbox://styles/mapbox/streets-v12';
-    const mapboxDark = 'mapbox://styles/mapbox/dark-v11';
-
-    if (!name) return mapboxStreets;
-
-    switch (name) {
-        case 'MapTiler Toner':
-            return `https://api.maptiler.com/maps/toner-v2/style.json?key=${MAPTILER_KEY}`;
-        case 'MapTiler Dataviz':
-            return `https://api.maptiler.com/maps/dataviz/style.json?key=${MAPTILER_KEY}`;
-        case 'Jawg Dark':
-            return `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_ACCESS_TOKEN}`;
-        case 'Jawg Light':
-            return `https://api.jawg.io/styles/jawg-light.json?access-token=${JAWG_ACCESS_TOKEN}`;
-        case 'OpenStreetMap.HOT':
-            return `https://api.maptiler.com/maps/bright/style.json?key=${MAPTILER_KEY}`;
-        case 'OpenStreetMap':
-            return `https://api.maptiler.com/maps/openstreetmap/style.json?key=${MAPTILER_KEY}`;
-        default:
-            return mapboxStreets;
-    }
-}
+let currentBasemap = null;
 
 /**
  * Enable 3D mode
@@ -61,96 +30,66 @@ export function enable3DMode(map, showCompass) {
     
     buildings3DEnabled = true;
     
-    if (!mapbox3DLayer) {
-        try {
-            // Set access token
-            mapboxgl.accessToken = MAPBOX_TOKEN;
-            
-            const zoom = Math.max(map.getZoom(), 15);
-            
-            // Determine current basemap BEFORE removing it
-            originalBasemap = null;
-            currentBasemapName = null;
-            for (const [name, baseLayer] of Object.entries(baseMaps)) {
-                if (map.hasLayer(baseLayer)) {
-                    originalBasemap = baseLayer;
-                    currentBasemapName = name;
-                    break;
-                }
+    try {
+        // Find active basemap (now all are GL-based)
+        for (const [name, baseLayer] of Object.entries(baseMaps)) {
+            if (map.hasLayer(baseLayer)) {
+                currentBasemap = baseLayer;
+                console.log('Active basemap:', name);
+                break;
             }
-            console.log('Active basemap before 3D:', currentBasemapName);
-
-            // Remove all Leaflet tile layers
-            map.eachLayer((layer) => {
-                if (layer instanceof L.TileLayer) {
-                    map.removeLayer(layer);
-                }
-            });
-            console.log('Leaflet basemap removed');
-            
-            // Hide POI markers and labels in 3D mode
-            hidePOIMarkers(map);
-            
-            // Create Mapbox GL layer
-            mapbox3DLayer = L.mapboxGL({
-                accessToken: MAPBOX_TOKEN,
-                style: get3DStyleForBasemap(currentBasemapName),
-                pane: 'tilePane',
-                interactive: true,
-                dragRotate: true,
-                pitchWithRotate: true,
-                touchPitch: true,
-                touchZoomRotate: true,
-                updateInterval: 16, // 60fps
-                bearingSnap: 7,
-                renderWorldCopies: false,
-                preserveDrawingBuffer: true,
-                pitchWithRotate: true,
-                dragPan: true,
-                fadeDuration: 0,
-                crossSourceCollisions: false
-            }).addTo(map);
-            
-            console.log('Mapbox 3D Layer added');
-            
-            // Wait for the mapbox map to be ready
-            setTimeout(() => {
-                try {
-                    const mapboxMap = mapbox3DLayer.getMapboxMap();
-                    
-                    if (mapboxMap && mapboxMap.isStyleLoaded()) {
-                        console.log('Mapbox Style loaded, adding 3D buildings...');
-                        add3DBuildings(mapboxMap);
-                    } else {
-                        const onIdle = () => {
-                            console.log('Mapbox Style ready (idle), adding 3D buildings...');
-                            add3DBuildings(mapboxMap);
-                        };
-                        mapboxMap.once('idle', onIdle);
-                    }
-                } catch (e) {
-                    console.error('Error accessing Mapbox Map:', e);
-                }
-            }, 1000);
-            
-            // Zoom to appropriate level
-            if (map.getZoom() < 15) {
-                console.log('Zooming to level 15 for 3D buildings');
-                map.setZoom(15);
-            }
-            
-            // Show compass
-            if (showCompass) showCompass();
-            
-            return true;
-        } catch (error) {
-            console.error('Error loading Mapbox 3D:', error);
-            alert('3D buildings could not be loaded: ' + error.message);
-            buildings3DEnabled = false;
+        }
+        
+        if (!currentBasemap) {
+            console.error('No active basemap found');
             return false;
         }
+        
+        // Get the GL map from the basemap layer
+        const glMap = getGLMapFromLayer(currentBasemap);
+        if (!glMap) {
+            console.error('Could not access GL map from basemap');
+            return false;
+        }
+        
+        // Hide POI markers and labels in 3D mode
+        hidePOIMarkers(map);
+        
+        // Enable 3D controls on existing GL layer
+        glMap.dragRotate.enable();
+        glMap.touchPitch.enable();
+        
+        // Wait for style to be loaded before adding 3D buildings
+        const add3DWhenReady = () => {
+            if (glMap.isStyleLoaded()) {
+                console.log('Adding 3D buildings...');
+                add3DBuildings(glMap);
+            } else {
+                glMap.once('idle', () => {
+                    console.log('Style ready, adding 3D buildings...');
+                    add3DBuildings(glMap);
+                });
+            }
+        };
+        
+        add3DWhenReady();
+        
+        // Zoom to appropriate level for 3D buildings
+        if (map.getZoom() < 15) {
+            console.log('Zooming to level 15 for 3D buildings');
+            map.setZoom(15);
+        }
+        
+        // Show compass
+        if (showCompass) showCompass();
+        
+        return true;
+    } catch (error) {
+        console.error('Error enabling 3D mode:', error);
+        alert('3D mode could not be enabled: ' + error.message);
+        buildings3DEnabled = false;
+        return false;
     }
-    return true;
 }
 
 /**
@@ -162,37 +101,35 @@ export function disable3DMode(map, hideCompass) {
     buildings3DEnabled = false;
     console.log('3D View disabled');
     
-    if (mapbox3DLayer) {
-        try {
-            map.removeLayer(mapbox3DLayer);
-            mapbox3DLayer = null;
-            console.log('Mapbox 3D Layer removed');
-            
-            // Restore original basemap
-            if (originalBasemap) {
-                originalBasemap.addTo(map);
-                console.log('Leaflet Basemap restored:', currentBasemapName);
-            } else if (currentBasemapName && baseMaps[currentBasemapName]) {
-                baseMaps[currentBasemapName].addTo(map);
-                console.log('Leaflet Basemap restored by name:', currentBasemapName);
-            } else {
-                // Default fallback
-                baseMaps['Jawg Light'].addTo(map);
-                console.log('Default Basemap restored');
-            }
-            
-            // Show POI markers and labels again
-            showPOIMarkers(map);
-            
-            // Trigger layer control update
-            map.fire('baselayerchange', { layer: originalBasemap || baseMaps['Jawg Light'] });
-            
-            // Hide compass
-            if (hideCompass) hideCompass();
-            
-        } catch (error) {
-            console.error('Error removing Mapbox 3D:', error);
+    try {
+        if (!currentBasemap) {
+            console.error('No current basemap to restore');
+            return;
         }
+        
+        // Get GL map from current basemap
+        const glMap = getGLMapFromLayer(currentBasemap);
+        if (!glMap) {
+            console.error('Could not access GL map');
+            return;
+        }
+        
+        // Disable 3D controls, reset to 2D view
+        glMap.setPitch(0);
+        glMap.setBearing(0);
+        glMap.dragRotate.disable();
+        glMap.touchPitch.disable();
+        
+        console.log('3D controls disabled, map reset to 2D');
+        
+        // Show POI markers and labels again
+        showPOIMarkers(map);
+        
+        // Hide compass
+        if (hideCompass) hideCompass();
+        
+    } catch (error) {
+        console.error('Error disabling 3D mode:', error);
     }
 }
 
@@ -209,56 +146,60 @@ export function is3DModeEnabled() {
  * @param {Object} event - Leaflet baselayerchange event
  */
 export function handle3DBasemapChange(event) {
-    if (!buildings3DEnabled || !mapbox3DLayer) return;
+    if (!buildings3DEnabled) return;
     
     try {
-        // Determine basemap name by matching the layer object
-        const getBasemapNameByLayer = (layerObj) => {
-            for (const [name, lyr] of Object.entries(baseMaps)) {
-                if (lyr === layerObj) return name;
-            }
-            return null;
-        };
-
-        const newName = getBasemapNameByLayer(event.layer);
-        if (newName) {
-            currentBasemapName = newName;
-            originalBasemap = null;
-            
-            // Remove the Leaflet tile layer that was just activated by the control
-            if (event.layer._map) {
-                event.layer._map.removeLayer(event.layer);
-            }
-
-            // Update GL style to match the new basemap
-            const glMap = (typeof mapbox3DLayer.getMapboxMap === 'function') 
-                ? mapbox3DLayer.getMapboxMap() 
-                : mapbox3DLayer._glMap;
-            const newStyle = get3DStyleForBasemap(currentBasemapName);
-            
-            if (glMap && newStyle) {
-                // Save current camera position
-                const currentPitch = glMap.getPitch();
-                const currentBearing = glMap.getBearing();
-                const currentZoom = glMap.getZoom();
-                const currentCenter = glMap.getCenter();
-                
-                glMap.setStyle(newStyle);
-                const onIdle = () => {
-                    try {
-                        add3DBuildings(glMap);
-                        // Restore camera position after style change
-                        glMap.setPitch(currentPitch);
-                        glMap.setBearing(currentBearing);
-                        glMap.setZoom(currentZoom);
-                        glMap.setCenter(currentCenter);
-                    } catch (err) {
-                        console.error('Error adding 3D buildings after style switch:', err);
-                    }
-                };
-                glMap.once('idle', onIdle);
-            }
+        // Update current basemap reference
+        currentBasemap = event.layer;
+        
+        // Get GL map from new basemap
+        const glMap = getGLMapFromLayer(currentBasemap);
+        if (!glMap) {
+            console.error('Could not access GL map from new basemap');
+            return;
         }
+        
+        console.log('Basemap changed in 3D mode');
+        
+        // Save current camera position
+        const currentPitch = glMap.getPitch();
+        const currentBearing = glMap.getBearing();
+        const currentZoom = glMap.getZoom();
+        const currentCenter = glMap.getCenter();
+        
+        // Wait for new style to load, then re-add 3D buildings and restore camera
+        const onStyleLoad = () => {
+            try {
+                add3DBuildings(glMap);
+                // Restore camera position
+                glMap.setPitch(currentPitch);
+                glMap.setBearing(currentBearing);
+                glMap.setZoom(currentZoom);
+                glMap.setCenter(currentCenter);
+                
+                // Re-enable 3D controls
+                glMap.dragRotate.enable();
+                glMap.touchPitch.enable();
+                
+                // Reapply current LOD level
+                const lodSlider = document.getElementById('lod-range');
+                if (lodSlider) {
+                    const currentLevel = parseInt(lodSlider.value);
+                    applyLOD(currentLevel, event.target);
+                }
+                
+                console.log('3D buildings and camera restored after basemap change');
+            } catch (err) {
+                console.error('Error restoring 3D after basemap change:', err);
+            }
+        };
+        
+        if (glMap.isStyleLoaded()) {
+            onStyleLoad();
+        } else {
+            glMap.once('idle', onStyleLoad);
+        }
+        
     } catch (err) {
         console.error('Basemap switch in 3D mode failed:', err);
     }

@@ -13,6 +13,7 @@ import { loadPOIMarkers } from './layers/poi-markers.js';
 // Features
 import { initializeSettings } from './features/settings.js';
 import { enable3DMode, disable3DMode, is3DModeEnabled, handle3DBasemapChange } from './features/3d-mode.js';
+import { initializeLODControl } from './features/lod-control.js';
 
 // Controls
 import { initializeCompass, showCompass, hideCompass, setMapbox3DLayer } from './controls/compass.js';
@@ -89,29 +90,32 @@ async function initializeApp() {
     // 8. Initialize settings
     initializeSettings(map);
     
-    // 9. Initialize UI components
+    // 9. Initialize LOD control
+    initializeLODControl(map);
+    
+    // 10. Initialize UI components
     initializeSidebar(map);
     setupBasemapSelectors(map);
     initializeKeyboardShortcuts();
     initializeDocumentShortcuts();
     
-    // 10. Initialize accessibility features
+    // 11. Initialize accessibility features
     initializeAccessibility();
     
-    // 11. Initialize compass control
+    // 12. Initialize compass control
     initializeCompass();
     
-    // 12. Initialize AI control
+    // 13. Initialize AI control
     initializeAIControl(map);
     
-    // 13. Setup collapsible sections
+    // 14. Setup collapsible sections
     setupCollapsible('map-config-toggle', 'map-config-content');
     setupCollapsible('symbols-toggle', 'symbols');
     
-    // 14. Initialize 3D mode toggle
+    // 15. Initialize 3D mode toggle
     initialize3DToggle(map);
     
-    // 15. Setup basemap change handler for 3D mode
+    // 16. Setup basemap change handler for 3D mode
     map.on('baselayerchange', (e) => {
         handle3DBasemapChange(e);
     });

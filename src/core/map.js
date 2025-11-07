@@ -13,7 +13,15 @@ export function initializeMap() {
     const map = L.map('map', {
         attributionControl: true,
         setPrefix: false,
-        layers: [] // Layers will be added separately
+        layers: [], // Layers will be added separately
+        // Smoother zoom behavior with vector tiles (avoid interim bitmap scaling)
+        zoomAnimation: false,
+        markerZoomAnimation: false,
+        fadeAnimation: true,
+        zoomSnap: 0,           // allow fractional zoom levels for smoother wheel zoom
+        zoomDelta: 0.25,       // smaller steps per programmatic zoom
+        wheelDebounceTime: 25, // make wheel zoom feel responsive
+        wheelPxPerZoomLevel: 80
     }).setView(MAP_CONFIG.center, MAP_CONFIG.zoom);
 
     // Add keyboard shortcuts to attribution control

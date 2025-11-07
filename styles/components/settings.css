@@ -119,6 +119,60 @@ aside .slider.round:before {
 }
 /* Checkbox slider ends */
 
+/* LOD (Level of Detail) Slider - Simple and accessible */
+aside .lod-control {
+    display: block;
+}
+
+aside .lod-slider-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+aside #lod-range {
+    width: 100%;
+    height: 12px;
+    border-radius: 2px;
+    background: #ccc;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+aside #lod-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: #1900ff;
+    cursor: pointer;
+    border: 3px solid #000;
+}
+
+aside #lod-range::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: #1900ff;
+    cursor: pointer;
+    border: 3px solid #000;
+}
+
+aside #lod-range:focus {
+    outline: 3px solid #000;
+    outline-offset: 3px;
+}
+
+aside .lod-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #000;
+}
+
 /* Basemap selector */
 aside .basemaps {
     border-bottom: 1px solid lightgrey;

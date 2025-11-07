@@ -1,48 +1,66 @@
 /**
- * Basemap Layer Definitions
- * Defines all available basemap tile layers
+ * Basemap Layer Definitions (Vector Tiles)
+ * All basemaps now use Mapbox GL for full LOD control
  */
 
-import { MAPTILER_KEY, JAWG_ACCESS_TOKEN } from '../core/config.js';
+import { MAPTILER_KEY, JAWG_ACCESS_TOKEN, MAPBOX_TOKEN } from '../core/config.js';
 
-// OpenStreetMap Layers
-export const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    crossOrigin: true,
-    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">OpenStreetMap</a>'
-});
+/**
+ * Create a Mapbox GL vector layer for use with Leaflet
+ * @param {string} style - Mapbox GL style URL
+ * @param {string} name - Layer name for identification
+ * @returns {L.MapboxGL} Vector tile layer
+ */
+function createVectorLayer(style, name) {
+    return L.mapboxGL({
+        accessToken: MAPBOX_TOKEN,
+        style: style,
+        pane: 'tilePane',
+        interactive: true,
+        attributionControl: false, // Handled by map
+        dragRotate: false, // 2D by default
+        pitchWithRotate: false,
+        touchPitch: false,
+        dragPan: true,
+        // Remove preserveDrawingBuffer for better performance and memory
+        preserveDrawingBuffer: false,
+        // Slightly lower update rate to avoid jumpy re-renders on rapid zoom
+        updateInterval: 32,
+        // Enable small fade duration to smooth style/layer transitions
+        fadeDuration: 150
+    });
+}
 
-export const osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    crossOrigin: true,
-    attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
-});
+// Vector Basemaps using Mapbox GL styles
+export const osm = createVectorLayer(
+    `https://api.maptiler.com/maps/openstreetmap/style.json?key=${MAPTILER_KEY}`,
+    'OpenStreetMap'
+);
 
-// MapTiler Layers
-export const mtLayerDataviz = L.tileLayer(`https://api.maptiler.com/maps/dataviz/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
-    maxZoom: 19,
-    crossOrigin: true,
-    attribution: '<a href="https://www.maptiler.com/copyright/" aria-label="MapTiler attribution. Opens in a new tab" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap contributors</a>',
-});
+export const osmHOT = createVectorLayer(
+    `https://api.maptiler.com/maps/bright/style.json?key=${MAPTILER_KEY}`,
+    'OpenStreetMap.HOT'
+);
 
-export const mtLayerToner = L.tileLayer(`https://api.maptiler.com/maps/toner-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
-    maxZoom: 19,
-    crossOrigin: true,
-    attribution: '<a href="https://www.maptiler.com/copyright/" aria-label="MapTiler attribution. Opens in a new tab" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap contributors</a>',
-});
+export const mtLayerDataviz = createVectorLayer(
+    `https://api.maptiler.com/maps/dataviz/style.json?key=${MAPTILER_KEY}`,
+    'MapTiler Dataviz'
+);
 
-// Jawg Layers
-export const jawgLight = L.tileLayer('https://tile.jawg.io/jawg-light/{z}/{x}/{y}{r}.png?access-token=' + JAWG_ACCESS_TOKEN, {
-    maxZoom: 22,
-    crossOrigin: true,
-    attribution: '<a href="https://www.jawg.io?utm_medium=map&utm_source=attribution" aria-label="Jawg attribution. Opens in a new tab" target="_blank">&copy; Jawg</a> - <a href="https://www.openstreetmap.org?utm_medium=map-attribution&utm_source=jawg" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap</a>&nbsp;contributors'
-});
+export const mtLayerToner = createVectorLayer(
+    `https://api.maptiler.com/maps/toner-v2/style.json?key=${MAPTILER_KEY}`,
+    'MapTiler Toner'
+);
 
-export const jawgDark = L.tileLayer('https://tile.jawg.io/jawg-dark/{z}/{x}/{y}{r}.png?access-token=' + JAWG_ACCESS_TOKEN, {
-    maxZoom: 22,
-    crossOrigin: true,
-    attribution: '<a href="https://www.jawg.io?utm_medium=map&utm_source=attribution" aria-label="Jawg attribution. Opens in a new tab" target="_blank">&copy; Jawg</a> - <a href="https://www.openstreetmap.org?utm_medium=map-attribution&utm_source=jawg" aria-label="OpenStreetMap attribution. Opens in a new tab" target="_blank">&copy; OpenStreetMap</a>&nbsp;contributors'
-});
+export const jawgLight = createVectorLayer(
+    `https://api.jawg.io/styles/jawg-light.json?access-token=${JAWG_ACCESS_TOKEN}`,
+    'Jawg Light'
+);
+
+export const jawgDark = createVectorLayer(
+    `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_ACCESS_TOKEN}`,
+    'Jawg Dark'
+);
 
 // Basemap collection for layer control
 export const baseMaps = {
@@ -56,10 +74,24 @@ export const baseMaps = {
 
 /**
  * Get the default basemap layer
- * @returns {L.TileLayer} Default basemap (Jawg Light)
+ * @returns {L.MapboxGL} Default basemap (Jawg Light)
  */
 export function getDefaultBasemap() {
     return jawgLight;
+}
+
+/**
+ * Get the Mapbox GL map instance from a vector layer
+ * @param {L.MapboxGL} layer - Vector tile layer
+ * @returns {mapboxgl.Map|null} Underlying Mapbox GL map
+ */
+export function getGLMapFromLayer(layer) {
+    if (!layer) return null;
+    try {
+        return (typeof layer.getMapboxMap === 'function') ? layer.getMapboxMap() : layer._glMap || null;
+    } catch {
+        return null;
+    }
 }
 
 /**
