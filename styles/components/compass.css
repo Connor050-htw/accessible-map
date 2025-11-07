@@ -1,0 +1,51 @@
+/**
+ * Compass Component - 3D navigation compass control
+ */
+
+.compass-control {
+    position: absolute;
+    top: 10px;
+    left: 52px;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.compass-control:hover {
+    background: #f4f4f4;
+    transform: scale(1.05);
+}
+
+.compass-control.visible {
+    display: flex;
+}
+
+.compass-arrow {
+    font-size: 28px;
+    font-weight: bold;
+    color: #e53935;
+    transition: transform 0.3s ease;
+    user-select: none;
+}
+
+.compass-label {
+    position: absolute;
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+}
+
+.compass-label.north {
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+}

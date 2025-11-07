@@ -1,0 +1,119 @@
+/**
+ * AI Description Component - Audio description controls and output
+ */
+
+/* AI description output bar */
+#ai-description-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 13px;
+    margin: 8px;
+    margin-left: 360px;
+    margin-right: 10px;
+    z-index: 5000;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 6px;
+    max-height: 40px;
+    overflow-y: auto;
+    display: block;
+}
+
+/* Allow hiding the transcript bar when user disables it */
+#ai-description-container.hidden {
+    display: none;
+}
+
+#ai-description {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Leaflet AI control */
+.leaflet-control-ai {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.leaflet-control-ai .ai-main-btn {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.leaflet-control-ai .ai-main-btn img {
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    display: block;
+}
+
+.leaflet-control-ai .ai-main-btn:hover { 
+    background: #f8f8fa; 
+}
+
+/* Panel permanently hidden - no hover expansion */
+.leaflet-control-ai .ai-panel {
+    display: none;
+}
+
+/* One row: Toggle left, Button right */
+.leaflet-control-ai .ai-row { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+}
+
+.leaflet-control-ai .ai-start-btn {
+    width: 100%;
+    padding: 6px 8px;
+    margin: 0;
+    background-color: #1900ff;
+    color: #fff;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    cursor: pointer;
+    font-weight: 600;
+    flex: 1;
+}
+
+.leaflet-control-ai .ai-start-btn:disabled { 
+    opacity: 0.6; 
+    cursor: progress; 
+}
+
+.leaflet-control-ai .ai-audio-toggle { 
+    display: flex; 
+    align-items: center; 
+}
+
+/* Compact switch size in panel */
+.leaflet-control-ai .switch { 
+    width: 42px; 
+    height: 24px; 
+}
+
+.leaflet-control-ai .switch .slider { 
+    border-radius: 24px; 
+}
+
+.leaflet-control-ai .switch .slider:before { 
+    width: 18px; 
+    height: 18px; 
+    left: 3px; 
+    bottom: 3px; 
+    border-radius: 50%; 
+}
+
+.leaflet-control-ai .switch input:checked + .slider:before { 
+    transform: translateX(18px); 
+}

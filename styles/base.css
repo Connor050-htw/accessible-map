@@ -1,0 +1,67 @@
+/**
+ * Base Styles - Global resets, typography, and foundational styles
+ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Lato','Roboto', sans-serif;
+}
+
+body {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 350px 1fr 1fr 1fr 1fr;
+    grid-template-rows: 65px max-content;
+    grid-template-areas: 
+        "header header header header header"
+        "aside main main main main";
+}
+
+.skip-link {    
+    position: absolute;
+    top: -500px;
+    left: 0;
+    background-color: #000000;
+    color: white;
+    padding: 10px;
+    z-index: 10000;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Body mobile view */
+@media (max-width: 768px) {
+    body {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.hidden-sidebar {
+    grid-template-areas:
+            "header header header header header"
+            "main main main main main";
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.displayed {
+    display: block;
+}
+
+/* Screen-reader only text */
+.visually-hidden {
+    position: absolute !important;
+    height: 1px; 
+    width: 1px; 
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+}

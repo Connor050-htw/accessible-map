@@ -1,0 +1,127 @@
+/**
+ * Sidebar Component - Configuration panel and controls
+ */
+
+aside {
+    grid-area: aside;
+    padding: 1rem;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+    scrollbar-color: #f8f8fa white;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+}
+
+aside h2, 
+aside h3 {
+    padding: 0.8rem 0;
+}
+
+/* Collapsible section header */
+aside .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+}
+
+/* Small black arrow button */
+aside .section-toggle {
+    background: transparent;
+    border: none;
+    color: #000;
+    cursor: pointer;
+    min-width: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+}
+
+/* Bigger arrow glyph */
+aside .section-toggle .arrow {
+    font-size: 35px;
+    font-weight: 700;
+}
+
+/* Indicate clickable headings for toggling */
+aside .clickable-heading {
+    cursor: pointer;
+}
+
+aside .section-toggle:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+/* Sidebar mobile view */
+@media (max-width: 768px) {
+    aside {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        background: white;
+        width: 80%;
+        top: 0;
+        left: 0;
+        margin: 10%;
+        box-shadow: 1px 1px 5px 1px lightgrey;
+        border-radius: 5px;
+    }
+}
+
+/* Sidebar toggle button */
+#sidebar-button {
+    position: absolute;
+    top: 50%;
+    z-index: 10000;
+    background-color: white;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-left: none;
+    cursor: pointer;
+    padding: 0.7rem 0.3rem;
+    font-size: 1.5rem;
+    border-radius: 0 5px 5px 0;
+}
+
+#sidebar-button:hover {
+    background-color: #f8f8fa;
+}
+
+/* Symbols section */
+aside #symbols {
+    padding: 10px;
+}
+
+aside .symbol {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    column-gap: 2rem;
+    padding: 0.5rem 0;
+}
+
+aside .symbol span {
+    font: bold 22px 'Lucida Console', Monaco, monospace;
+    text-indent: 1px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    text-align: center;
+    color: black;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+aside .symbol span.symbol-image {
+    padding: 0;
+    line-height: 0;
+}

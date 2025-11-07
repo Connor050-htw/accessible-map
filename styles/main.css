@@ -1,0 +1,17 @@
+/**
+ * Main CSS Entry Point
+ * Imports all component and base styles in proper order
+ */
+
+/* Base styles (resets, global typography, utilities) */
+@import './base.css';
+
+/* Component styles (alphabetical order for clarity) */
+@import './components/about.css';
+@import './components/ai-description.css';
+@import './components/compass.css';
+@import './components/header.css';
+@import './components/keyboard-shortcuts.css';
+@import './components/map.css';
+@import './components/settings.css';
+@import './components/sidebar.css';

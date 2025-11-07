@@ -1,0 +1,59 @@
+/**
+ * Header Component - Navigation and branding
+ */
+
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    box-shadow: 1px 1px 5px lightgrey;
+    height: auto;
+    grid-area: header;
+}
+
+header p {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+header nav {
+    display: flex;
+    margin-left: auto;
+}
+
+header nav ul {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+header nav ul li {
+    margin-left: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+header nav ul a {
+    text-decoration: none;
+    color: black;
+    padding: 10px;
+}
+
+/* Header mobile view */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 0;
+    }
+
+    header p {
+        font-size: 1.5rem;
+    }
+
+    header nav {
+        margin: 0.5rem 0;
+    }
+}

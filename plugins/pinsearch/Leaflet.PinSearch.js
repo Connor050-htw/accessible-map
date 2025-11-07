@@ -1,4 +1,4 @@
-import { focusPopup } from "../../script.js";
+import { focusPopup } from "../../src/main.js";
 
 L.Control.PinSearch = L.Control.extend({
   options: {
@@ -27,14 +27,14 @@ L.Control.PinSearch = L.Control.extend({
     input.placeholder = this.options.placeholder;
     input.style.width = this.options.searchBarWidth;
     input.style.height = this.options.searchBarHeight;
-    input.ariaLabel = this.options.placeholder; // Add aria-label to the input for screen readers *Sam
-    input.id = 'search-input'; // Add id to the input for the label to reference *Sam
-    input.autocomplete = 'off'; // Disable autocomplete to prevent browser suggestions *Sam
+    input.ariaLabel = this.options.placeholder; 
+    input.id = 'search-input'; 
+    input.autocomplete = 'off'; 
 
     var searchIcon = L.DomUtil.create('span', 'search-icon', inputContainer);
     searchIcon.innerHTML = '&#128269;';
     searchIcon.style.fontSize = '1.5em';
-    searchIcon.ariaHidden = true; // Hide the icon from screen readers *Sam
+    searchIcon.ariaHidden = true;
 
     var resultsContainer = L.DomUtil.create('div', 'search-results', container);
     resultsContainer.style.display = 'none';
@@ -74,7 +74,7 @@ L.Control.PinSearch = L.Control.extend({
       self._onResultsItemKeydown(event);
     });
 
-    container.addEventListener('keyup', function(event) {  // Localise keyup event listener to the container *Sam
+    container.addEventListener('keyup', function(event) {  
       self._onDocumentKeyup(event);
     });
 
@@ -87,7 +87,7 @@ L.Control.PinSearch = L.Control.extend({
       if (layer instanceof L.Marker && layer.options.title) {
         this.markerLabels.push(layer.options.title);
       } else if (typeof L.MarkerCluster !== 'undefined' && layer instanceof L.MarkerCluster) {
-        // Use getAllChildMarkers to get all markers in the cluster, and add their titles to the list
+        
         layer.getAllChildMarkers().forEach((child) => {
           if (child instanceof L.Marker && child.options.title) {
             this.markerLabels.push(child.options.title);
@@ -226,8 +226,8 @@ L.Control.PinSearch = L.Control.extend({
         var item = document.createElement('div');
         item.className = 'search-results-item';
         item.textContent = match;
-        item.ariaLabel = match; // Add aria-label to the item for screen readers *Sam
-        item.tabIndex = 0; // Make the item focusable *Sam
+        item.ariaLabel = match; // Add aria-label to the item for screen readers 
+        item.tabIndex = 0; // Make the item focusable 
         item.addEventListener('click', function() {
           self._onSearchItemClick(match);
           resultsContainer.style.display = 'none'; // Hide results after clicking on an item
@@ -235,7 +235,7 @@ L.Control.PinSearch = L.Control.extend({
         item.addEventListener('keydown', function (event) {
           if (event.key === 'Enter') {
             self._onSearchItemClick(match);
-            resultsContainer.style.display = 'none'; // Hide results after pressing enter on an item *Sam
+            resultsContainer.style.display = 'none'; // Hide results after pressing enter on an item
           }
         });
         resultsContainer.appendChild(item);
@@ -256,8 +256,8 @@ L.Control.PinSearch = L.Control.extend({
       var marker = this._findMarkerByTitle(query);
       if (marker) {
         this._map.panTo(marker.getLatLng());
-        marker.openPopup(); // Open the marker popup *Sam
-        focusPopup(); // Focus on the popup content *Sam
+        marker.openPopup(); // Open the marker popup 
+        focusPopup(); // Focus on the popup content 
       }
     }
   },

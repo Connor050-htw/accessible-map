@@ -1,0 +1,19 @@
+/**
+ * About Page Component - About page specific styles
+ */
+
+#about-body {
+    display: block;
+    margin: 0 auto;
+}
+
+#about-body #about-text {
+    padding: 1rem;
+    width: 80%;
+    max-width: 800px;
+    margin: 3rem auto;
+}
+
+#about-body #about-text p {
+    margin: 1rem auto;
+}
