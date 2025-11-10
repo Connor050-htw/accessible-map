@@ -8,6 +8,7 @@ import { captureMapAsDataUrl } from '../utils/map-capture.js';
 
 let isAudioOn = true;
 let isSpeaking = false;
+let useGermanAudio = false;
 
 /**
  * Update AI button visuals based on speaking state
@@ -55,7 +56,8 @@ async function requestDescription(imageDataUrl) {
         speed: getSpeed(),
         voice: 'random',
         response_type: 'text',
-        skip_openai: false
+        skip_openai: false,
+        language: useGermanAudio ? 'de' : 'en'
     };
     const res = await fetch(`${AI_API_BASE}/description/`, {
         method: 'POST',
@@ -76,18 +78,28 @@ function speak(text) {
     const doSpeak = () => {
         const u = new SpeechSynthesisUtterance(text);
         u.rate = getSpeed();
-        u.lang = 'en-US';
+        u.lang = useGermanAudio ? 'de-DE' : 'en-US';
         
         // Get all available voices
         const voices = speechSynthesis.getVoices();
-        const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+        const langVoices = useGermanAudio 
+            ? voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('de'))
+            : voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
         
-        if (enVoices.length > 0) {
-            // Prefer Google voices
-            let selectedVoice = enVoices.find(v => v.name.includes('Google US English'));
-            if (!selectedVoice) selectedVoice = enVoices.find(v => v.name.includes('Google UK English'));
-            if (!selectedVoice) selectedVoice = enVoices.find(v => v.name.toLowerCase().includes('google'));
-            if (!selectedVoice) selectedVoice = enVoices[0];
+        if (langVoices.length > 0) {
+            let selectedVoice;
+            if (useGermanAudio) {
+                // Prefer Google German voices
+                selectedVoice = langVoices.find(v => v.name.includes('Google Deutsch'));
+                if (!selectedVoice) selectedVoice = langVoices.find(v => v.name.toLowerCase().includes('google'));
+                if (!selectedVoice) selectedVoice = langVoices[0];
+            } else {
+                // Prefer Google English voices
+                selectedVoice = langVoices.find(v => v.name.includes('Google US English'));
+                if (!selectedVoice) selectedVoice = langVoices.find(v => v.name.includes('Google UK English'));
+                if (!selectedVoice) selectedVoice = langVoices.find(v => v.name.toLowerCase().includes('google'));
+                if (!selectedVoice) selectedVoice = langVoices[0];
+            }
             
             u.voice = selectedVoice;
             console.log('Using voice:', selectedVoice.name, '(' + selectedVoice.lang + ')');
@@ -164,6 +176,23 @@ export function initializeAIControl(map) {
         transcriptCheckbox.checked = !aiDescriptionContainer.classList.contains('hidden');
         transcriptCheckbox.addEventListener('change', () => {
             aiDescriptionContainer.classList.toggle('hidden', !transcriptCheckbox.checked);
+        });
+    }
+
+    // Initialize language toggle
+    const languageCheckbox = document.getElementById('language-checkbox');
+    const languageLabel = document.getElementById('language-label');
+    if (languageCheckbox) {
+        languageCheckbox.checked = useGermanAudio;
+        if (languageLabel) {
+            languageLabel.textContent = useGermanAudio ? 'Deutsch' : 'English';
+        }
+        languageCheckbox.addEventListener('change', () => {
+            useGermanAudio = languageCheckbox.checked;
+            if (languageLabel) {
+                languageLabel.textContent = useGermanAudio ? 'Deutsch' : 'English';
+            }
+            console.log('Audio language:', useGermanAudio ? 'German (de-DE)' : 'English (en-US)');
         });
     }
 
@@ -257,7 +286,8 @@ export function initializeAIControl(map) {
         speechSynthesis.onvoiceschanged = () => {
             const voices = speechSynthesis.getVoices();
             const enVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
-            console.log('Voices loaded:', voices.length, 'total,', enVoices.length, 'English');
+            const deVoices = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('de'));
+            console.log('Voices loaded:', voices.length, 'total,', enVoices.length, 'English,', deVoices.length, 'German');
         };
     }
 }

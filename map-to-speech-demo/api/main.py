@@ -43,6 +43,7 @@ class MapParams(BaseModel):
     voice: Voices = "random"
     response_type: str = "audio"
     skip_openai: bool = False
+    language: str = "en"  # 'en' or 'de'
 
 
 @app.post("/description/")
@@ -59,14 +60,27 @@ async def post_description(request_params: MapParams):
     else:
         b64_data = request_params.data_url
 
-    prompt = (
-        "Describe this map in approximately 50 words for visually impaired users. "
-        "Focus on: 1) The geographic region, "
-        "2) The overall distribution and density of markers or features, "
-        "3) Notable clusters or patterns, "
-        "4) Cardinal directions (north, south, east, west) of key elements. "
-        "Be clear and structured."
-    )
+    # Create language-specific prompt
+    if request_params.language == "de":
+        prompt = (
+            "Beschreibe diese Karte in etwa 50 Wörtern für sehbehinderte Nutzer. "
+            "Konzentriere dich auf: 1) Die geografische Region, "
+            "2) Die Namen wichtiger Merkmale, "
+            "3) Himmelsrichtungen (Norden, Süden, Osten, Westen) der wichtigsten Elemente. "
+            "Sei klar und strukturiert. "
+            "WICHTIG: Verwende KEINE Formatierungszeichen wie *, -, #, oder andere Sonderzeichen. "
+            "Der Text wird direkt vorgelesen, also schreibe nur normalen Fließtext ohne Markdown oder Formatierung."
+        )
+    else:
+        prompt = (
+            "Describe this map in approximately 50 words for visually impaired users. "
+            "Focus on: 1) The geographic region, "
+            "2) The names of key features, "
+            "3) Cardinal directions (north, south, east, west) of key elements. "
+            "Be clear and structured. "
+            "IMPORTANT: Do NOT use any formatting characters like *, -, #, or other special symbols. "
+            "The text will be read aloud directly, so write only plain flowing text without Markdown or formatting."
+        )
 
     # Prepare request for Ollama; try /api/generate, fallback to /api/chat
     base = OLLAMA_HOST.rstrip("/")
