@@ -41,7 +41,6 @@ export function hideCompass() {
  * Start tracking compass rotation based on map bearing
  */
 function startCompassTracking() {
-    // This will be updated by the 3D mode module via setMapbox3DLayer
     compassUpdateInterval = setInterval(() => {
         updateCompassFromMap();
     }, 100);
@@ -130,14 +129,4 @@ export function initializeCompass() {
             }
         });
     }
-}
-
-/**
- * Set the mapbox 3D layer reference for compass tracking
- * @deprecated No longer needed - compass now auto-detects active layer
- * @param {Object} layer - Mapbox GL Leaflet layer
- */
-export function setMapbox3DLayer(layer) {
-    // Kept for backwards compatibility but no longer used
-    window._mapbox3DLayer = layer;
 }

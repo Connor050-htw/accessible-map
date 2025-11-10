@@ -33,20 +33,26 @@
 
 /* Leaflet AI control */
 .leaflet-control-ai {
-    position: relative;
-    display: flex;
-    align-items: center;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    border-radius: 4px;
 }
 
 .leaflet-control-ai .ai-main-btn {
     width: 30px;
     height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     padding: 0;
     margin: 0;
-    box-sizing: border-box;
+    background-color: #fff;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    line-height: 30px;
 }
 
 .leaflet-control-ai .ai-main-btn img {
@@ -54,10 +60,11 @@
     height: 18px;
     pointer-events: none;
     display: block;
+    margin: 6px auto;
 }
 
 .leaflet-control-ai .ai-main-btn:hover { 
-    background: #f8f8fa; 
+    background-color: #f4f4f4;
 }
 
 /* Panel permanently hidden - no hover expansion */

@@ -1,12 +1,9 @@
 import base64
 import os
-import random
 
-from enum import Enum
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from io import BytesIO
 import httpx
 from pydantic import BaseModel
 
@@ -27,22 +24,8 @@ app.add_middleware(
 )
 
 
-class Voices(str, Enum):
-    random = "random"
-    alloy = "alloy"
-    echo = "echo"
-    fable = "fable"
-    onyx = "onyx"
-    nove = "nova"
-    shimmer = "shimmer"
-
-
 class MapParams(BaseModel):
     data_url: str
-    speed: float = 1.0
-    voice: Voices = "random"
-    response_type: str = "audio"
-    skip_openai: bool = False
     language: str = "en"  # 'en' or 'de'
 
 

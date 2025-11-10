@@ -11,17 +11,18 @@ let isSpeaking = false;
 let useGermanAudio = false;
 
 /**
- * Update AI button visuals based on speaking state
- * @param {boolean} speaking - Whether audio is currently playing
+ * Update audio button icon based on speaking state
  */
-function updateAIButtonVisuals(speaking) {
+function updateAudioButtonIcon() {
     const btn = document.querySelector('.leaflet-control-ai .ai-main-btn');
     if (!btn) return;
-    const icon = speaking ? 'speaker_mute_icon.png' : 'speaker_icon.png';
+    
+    const icon = isSpeaking ? 'speaker_mute_icon.png' : 'speaker_icon.png';
+    const title = isSpeaking ? 'Stop Audio' : 'Start Audiodescription';
+    
     btn.innerHTML = `<img src="./images/${icon}" alt="" aria-hidden="true" width="18" height="18">`;
-    const label = speaking ? 'Stop Audiodescription' : 'Start Audiodescription';
-    btn.title = label;
-    btn.setAttribute('aria-label', label);
+    btn.title = title;
+    btn.setAttribute('aria-label', title);
 }
 
 /**
@@ -31,18 +32,9 @@ export function stopAudio() {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         isSpeaking = false;
-        updateAIButtonVisuals(false);
+        updateAudioButtonIcon();
         console.log('Audio stopped');
     }
-}
-
-/**
- * Get playback speed from UI
- * @returns {number} Speed value (default 1.0)
- */
-function getSpeed() {
-    const aiSpeed = document.getElementById('ai-speed');
-    return aiSpeed ? (parseFloat(aiSpeed.value) || 1.0) : 1.0;
 }
 
 /**
@@ -53,10 +45,6 @@ function getSpeed() {
 async function requestDescription(imageDataUrl) {
     const body = {
         data_url: imageDataUrl,
-        speed: getSpeed(),
-        voice: 'random',
-        response_type: 'text',
-        skip_openai: false,
         language: useGermanAudio ? 'de' : 'en'
     };
     const res = await fetch(`${AI_API_BASE}/description/`, {
@@ -77,7 +65,6 @@ function speak(text) {
     
     const doSpeak = () => {
         const u = new SpeechSynthesisUtterance(text);
-        u.rate = getSpeed();
         u.lang = useGermanAudio ? 'de-DE' : 'en-US';
         
         // Get all available voices
@@ -108,9 +95,15 @@ function speak(text) {
         // Begin speaking
         window.speechSynthesis.cancel();
         isSpeaking = true;
-        updateAIButtonVisuals(true);
-        u.onend = () => { isSpeaking = false; updateAIButtonVisuals(false); };
-        u.onerror = () => { isSpeaking = false; updateAIButtonVisuals(false); };
+        updateAudioButtonIcon();
+        u.onend = () => { 
+            isSpeaking = false; 
+            updateAudioButtonIcon();
+        };
+        u.onerror = () => { 
+            isSpeaking = false; 
+            updateAudioButtonIcon();
+        };
         window.speechSynthesis.speak(u);
     };
     
@@ -208,7 +201,7 @@ export function initializeAIControl(map) {
         });
     }
 
-    // Leaflet AI control
+    // Leaflet AI control button
     const AIDescribeControl = L.Control.extend({
         options: { position: 'topleft' },
         onAdd: function() {
@@ -216,35 +209,19 @@ export function initializeAIControl(map) {
             L.DomEvent.disableClickPropagation(container);
             L.DomEvent.disableScrollPropagation(container);
 
-            const mainBtn = L.DomUtil.create('a', 'ai-main-btn', container);
-            mainBtn.href = '#';
-            mainBtn.title = 'Describe Map with Audio';
-            mainBtn.setAttribute('aria-label', 'Describe Map with Audio');
+            const mainBtn = L.DomUtil.create('button', 'ai-main-btn', container);
+            mainBtn.type = 'button';
+            mainBtn.title = 'Start Audiodescription';
+            mainBtn.setAttribute('aria-label', 'Start Audiodescription');
             mainBtn.innerHTML = '<img src="./images/speaker_icon.png" alt="" aria-hidden="true" width="18" height="18">';
 
-            const panel = L.DomUtil.create('div', 'ai-panel', container);
-            const row = L.DomUtil.create('div', 'ai-row', panel);
-
-            // Audio toggle
-            const toggleWrap = L.DomUtil.create('div', 'ai-audio-toggle', row);
-            const label = L.DomUtil.create('label', 'switch', toggleWrap);
-            label.setAttribute('aria-label', 'Audioausgabe ein/aus');
-            const checkbox = L.DomUtil.create('input', '', label);
-            checkbox.type = 'checkbox';
-            checkbox.checked = isAudioOn;
-            const slider = L.DomUtil.create('span', 'slider round', label);
-
-            // Start button
-            const startBtn = L.DomUtil.create('button', 'ai-start-btn', row);
-            startBtn.type = 'button';
-            startBtn.textContent = 'Audiobeschreibung abrufen';
-            startBtn.setAttribute('aria-label', 'Start Audiodescription');
-
-            // Events
-            mainBtn.addEventListener('click', (e) => { e.preventDefault(); });
-            startBtn.addEventListener('click', async () => { await describeCurrentMap(startBtn); });
-            checkbox.addEventListener('change', (e) => {
-                isAudioOn = !!e.target.checked;
+            // Events - Toggle between start and stop
+            mainBtn.addEventListener('click', async () => { 
+                if (isSpeaking) {
+                    stopAudio();
+                } else {
+                    await describeCurrentMap(); 
+                }
             });
 
             return container;
@@ -253,32 +230,39 @@ export function initializeAIControl(map) {
 
     map.addControl(new AIDescribeControl({ position: 'topleft' }));
 
-    // Reorder controls
-    try {
-        const corner = document.querySelector('.leaflet-top.leaflet-left');
-        const aiCtrl = document.querySelector('.leaflet-control-ai');
-        const layersCtrl = document.querySelector('.leaflet-control-layers');
-        if (corner && aiCtrl) {
-            corner.insertBefore(aiCtrl, layersCtrl || corner.firstChild);
-        }
-    } catch (e) {
-        console.debug('AI control reorder skipped:', e);
-    }
-
-    // Main button toggle functionality
-    const aiMainButton = document.querySelector('.leaflet-control-ai .ai-main-btn');
-    if (aiMainButton) {
-        aiMainButton.addEventListener('click', () => {
-            if (isSpeaking) {
-                stopAudio();
-            } else {
-                describeCurrentMap();
+    // Reorder controls to: Zoom, Fullscreen, Audio, Layers
+    // Use setTimeout to ensure all controls are added
+    setTimeout(() => {
+        try {
+            const corner = document.querySelector('.leaflet-top.leaflet-left');
+            const zoomCtrl = document.querySelector('.leaflet-control-zoom');
+            const fullscreenCtrl = document.querySelector('.leaflet-control-fullscreen');
+            const aiCtrl = document.querySelector('.leaflet-control-ai');
+            const layersCtrl = document.querySelector('.leaflet-control-layers');
+            
+            if (corner) {
+                // Remove all controls from corner
+                const controls = [zoomCtrl, fullscreenCtrl, aiCtrl, layersCtrl].filter(ctrl => ctrl);
+                
+                // Clear corner
+                controls.forEach(ctrl => {
+                    if (ctrl && ctrl.parentNode === corner) {
+                        corner.removeChild(ctrl);
+                    }
+                });
+                
+                // Re-add in correct order: Zoom, Fullscreen, Audio, Layers
+                if (zoomCtrl) corner.appendChild(zoomCtrl);
+                if (fullscreenCtrl) corner.appendChild(fullscreenCtrl);
+                if (aiCtrl) corner.appendChild(aiCtrl);
+                if (layersCtrl) corner.appendChild(layersCtrl);
+                
+                console.log('Controls reordered: Zoom → Fullscreen → Audio → Layers');
             }
-        });
-    }
-
-    // Initial visuals
-    updateAIButtonVisuals(false);
+        } catch (e) {
+            console.debug('Control reorder skipped:', e);
+        }
+    }, 100);
 
     // Preload voices for Chrome
     if ('speechSynthesis' in window) {

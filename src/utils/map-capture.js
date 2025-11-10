@@ -3,29 +3,37 @@
  * Handles capturing screenshots of the map for AI description
  */
 
+import { baseMaps } from '../layers/basemaps.js';
+
 /**
  * Capture the current map view as a data URL
  * @returns {Promise<string>} Data URL of the map image
  */
 export async function captureMapAsDataUrl() {
-    // Try to find any active Mapbox GL layer (2D or 3D mode)
     let glMap = null;
     
-    // Check for 3D mode layer
-    if (window._mapbox3DLayer && window._mapbox3DLayer._glMap) {
-        glMap = window._mapbox3DLayer._glMap;
-        console.log('3D mode layer found');
-    }
-    
-    // If no 3D layer, search for active basemap GL layer
-    if (!glMap && window._leafletMapInstance) {
+    // Find the currently active basemap layer
+    if (window._leafletMapInstance) {
         const map = window._leafletMapInstance;
-        map.eachLayer((layer) => {
-            if (layer._glMap && !glMap) {
-                glMap = layer._glMap;
-                console.log('Found Mapbox GL basemap layer');
+        
+        // Iterate through baseMaps to find the active one
+        for (const [name, baseLayer] of Object.entries(baseMaps)) {
+            if (map.hasLayer(baseLayer) && baseLayer._glMap) {
+                glMap = baseLayer._glMap;
+                console.log('Found active GL map for layer:', name);
+                break;
             }
-        });
+        }
+        
+        // Fallback: search all layers
+        if (!glMap) {
+            map.eachLayer((layer) => {
+                if (layer._glMap && !glMap) {
+                    glMap = layer._glMap;
+                    console.log('Found Mapbox GL basemap layer via eachLayer');
+                }
+            });
+        }
     }
     
     // If we found a Mapbox GL map, capture from it
@@ -48,6 +56,13 @@ export async function captureMapAsDataUrl() {
                 // Try to get the image data directly from the canvas
                 const dataUrl = glCanvas.toDataURL('image/png');
                 console.log('Successfully captured from Mapbox GL canvas, data URL length:', dataUrl.length);
+                
+                // Validate that we didn't get an empty/gray image
+                if (dataUrl.length < 1000) {
+                    console.error('Captured image seems too small, falling back to html2canvas');
+                    throw new Error('Canvas capture produced invalid image');
+                }
+                
                 return dataUrl;
             } else {
                 console.warn('Mapbox GL canvas not found');
@@ -56,6 +71,8 @@ export async function captureMapAsDataUrl() {
             console.error('Failed to capture Mapbox GL canvas:', error);
             console.warn('Falling back to html2canvas');
         }
+    } else {
+        console.warn('No Mapbox GL map found, using html2canvas fallback');
     }
     
     // Fallback: use html2canvas for the entire map element
@@ -71,7 +88,7 @@ export async function captureMapAsDataUrl() {
         useCORS: true, 
         backgroundColor: null, 
         scale: 1,
-        logging: true
+        logging: false
     });
     const dataUrl = canvas.toDataURL('image/png');
     console.log('Successfully captured with html2canvas, data URL length:', dataUrl.length);

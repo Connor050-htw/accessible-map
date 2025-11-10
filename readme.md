@@ -5,7 +5,6 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 ## TODO
 
 - (Ziehen im 3D bei gedrehter Karte ist buggy)
-- Audioausgabe in deutsch
 
 ## Inhalt
 

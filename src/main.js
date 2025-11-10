@@ -16,7 +16,7 @@ import { enable3DMode, disable3DMode, is3DModeEnabled, handle3DBasemapChange } f
 import { initializeLODControl } from './features/lod-control.js';
 
 // Controls
-import { initializeCompass, showCompass, hideCompass, setMapbox3DLayer } from './controls/compass.js';
+import { initializeCompass, showCompass, hideCompass } from './controls/compass.js';
 import { initializeAIControl } from './controls/ai-description.js';
 
 // UI modules
@@ -53,9 +53,6 @@ async function initializeApp() {
     try {
         const poiData = await loadPOIMarkers(map);
         console.log('POI markers loaded successfully');
-        
-        // Initialize search with POI data (if plugin is available)
-        initializeSearch(map, poiData);
     } catch (error) {
         console.error('Failed to load POI markers:', error);
     }
@@ -83,9 +80,6 @@ async function initializeApp() {
             position: 'topright',
             placeholder: 'Search castles',
             maxSearchResults: 5,
-            onSearch: (query) => {
-                console.log('Searching for:', query);
-            },
             markerLabels: pinLabels
         }).addTo(map);
     }
@@ -143,32 +137,11 @@ function initialize3DToggle(map) {
             const success = enable3DMode(map, showCompass);
             if (!success) {
                 view3DBtn.checked = false;
-            } else {
-                // Store reference for compass
-                setTimeout(() => {
-                    const mapbox3DLayer = map._layers[Object.keys(map._layers).find(
-                        key => map._layers[key].options && map._layers[key].options.accessToken
-                    )];
-                    if (mapbox3DLayer) {
-                        setMapbox3DLayer(mapbox3DLayer);
-                    }
-                }, 1500);
             }
         } else {
             disable3DMode(map, hideCompass);
         }
     });
-}
-
-/**
- * Initialize search functionality (if PinSearch plugin is available)
- * @param {L.Map} map - Leaflet map instance
- * @param {Object} poiData - GeoJSON POI data
- */
-function initializeSearch(map, poiData) {
-    // PinSearch control is added in HTML via plugin
-    // This is just a placeholder for additional search initialization if needed
-    console.log('Search control initialized via plugin');
 }
 
 // Start the application when DOM is ready
