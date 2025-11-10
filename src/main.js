@@ -36,6 +36,9 @@ async function initializeApp() {
     // 1. Initialize map
     const map = initializeMap();
     
+    // Store map instance globally for AI capture
+    window._leafletMapInstance = map;
+    
     // 2. Add default basemap
     const defaultBasemap = getDefaultBasemap();
     defaultBasemap.addTo(map);

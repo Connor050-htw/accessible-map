@@ -22,8 +22,8 @@ function createVectorLayer(style, name) {
         pitchWithRotate: false,
         touchPitch: false,
         dragPan: true,
-        // Remove preserveDrawingBuffer for better performance and memory
-        preserveDrawingBuffer: false,
+        // MUST be true to allow canvas export for AI description
+        preserveDrawingBuffer: true,
         // Slightly lower update rate to avoid jumpy re-renders on rapid zoom
         updateInterval: 32,
         // Enable small fade duration to smooth style/layer transitions
