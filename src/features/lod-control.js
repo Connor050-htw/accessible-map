@@ -187,14 +187,19 @@ function applyVectorLOD(level, glMap) {
 
 /**
  * Apply LOD to POI markers (Leaflet overlays)
- * POIs are always visible regardless of LOD level
+ * POIs are always visible regardless of LOD level, EXCEPT in 3D mode
  * @param {number} level - LOD level
  * @param {L.Map} map - Leaflet map
  */
 function applyPOILOD(level, map) {
-    // POIs always visible - no changes based on LOD level
+    // Don't show POIs in 3D mode - they should remain hidden
+    if (is3DModeEnabled()) {
+        return;
+    }
+    
+    // POIs always visible in 2D mode - no changes based on LOD level
     showPOIMarkers(map);
-    // Labels always visible
+    // Labels always visible in 2D mode
     document.querySelectorAll('.label').forEach(el => { 
         el.style.display = ''; 
     });
