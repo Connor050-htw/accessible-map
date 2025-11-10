@@ -4,7 +4,6 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 
 ## TODO
 
-- wenn man die 3D ansicht verlässt, bleiben die gebäude in der 3D Ansicht
 - (Ziehen im 3D bei gedrehter Karte ist buggy)
 - Audioausgabe in deutsch
 

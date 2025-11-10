@@ -5,13 +5,14 @@
 
 import { MAPBOX_TOKEN, MAPTILER_KEY, JAWG_ACCESS_TOKEN } from '../core/config.js';
 import { baseMaps, getGLMapFromLayer } from '../layers/basemaps.js';
-import { add3DBuildings } from '../layers/3d-buildings.js';
+import { add3DBuildings, remove3DBuildings } from '../layers/3d-buildings.js';
 import { hidePOIMarkers, showPOIMarkers } from '../layers/poi-markers.js';
 import { applyLOD } from './lod-control.js';
 
 // State management
 let buildings3DEnabled = false;
 let currentBasemap = null;
+let savedCameraState = null; // Store camera state for basemap changes
 
 /**
  * Enable 3D mode
@@ -80,8 +81,8 @@ export function enable3DMode(map, showCompass) {
             map.setZoom(15);
         }
         
-        // Show compass
-        if (showCompass) showCompass();
+        // Show compass with map reference
+        if (showCompass) showCompass(map);
         
         return true;
     } catch (error) {
@@ -102,25 +103,24 @@ export function disable3DMode(map, hideCompass) {
     console.log('3D View disabled');
     
     try {
-        if (!currentBasemap) {
-            console.error('No current basemap to restore');
-            return;
+        // Remove 3D from ALL basemap layers, not just the current one
+        for (const [name, baseLayer] of Object.entries(baseMaps)) {
+            const glMap = getGLMapFromLayer(baseLayer);
+            if (glMap) {
+                // Remove 3D buildings layer
+                remove3DBuildings(glMap);
+                
+                // Reset to 2D view
+                glMap.setPitch(0);
+                glMap.setBearing(0);
+                glMap.dragRotate.disable();
+                glMap.touchPitch.disable();
+                
+                console.log(`3D disabled for layer: ${name}`);
+            }
         }
         
-        // Get GL map from current basemap
-        const glMap = getGLMapFromLayer(currentBasemap);
-        if (!glMap) {
-            console.error('Could not access GL map');
-            return;
-        }
-        
-        // Disable 3D controls, reset to 2D view
-        glMap.setPitch(0);
-        glMap.setBearing(0);
-        glMap.dragRotate.disable();
-        glMap.touchPitch.disable();
-        
-        console.log('3D controls disabled, map reset to 2D');
+        console.log('3D controls disabled for all layers, map reset to 2D');
         
         // Show POI markers and labels again
         showPOIMarkers(map);
@@ -149,6 +149,20 @@ export function handle3DBasemapChange(event) {
     if (!buildings3DEnabled) return;
     
     try {
+        // Save camera state from OLD basemap before switching
+        if (currentBasemap) {
+            const oldGlMap = getGLMapFromLayer(currentBasemap);
+            if (oldGlMap) {
+                savedCameraState = {
+                    pitch: oldGlMap.getPitch(),
+                    bearing: oldGlMap.getBearing(),
+                    zoom: oldGlMap.getZoom(),
+                    center: oldGlMap.getCenter()
+                };
+                console.log('Saved camera state:', savedCameraState);
+            }
+        }
+        
         // Update current basemap reference
         currentBasemap = event.layer;
         
@@ -161,25 +175,29 @@ export function handle3DBasemapChange(event) {
         
         console.log('Basemap changed in 3D mode');
         
-        // Save current camera position
-        const currentPitch = glMap.getPitch();
-        const currentBearing = glMap.getBearing();
-        const currentZoom = glMap.getZoom();
-        const currentCenter = glMap.getCenter();
-        
         // Wait for new style to load, then re-add 3D buildings and restore camera
         const onStyleLoad = () => {
             try {
-                add3DBuildings(glMap);
-                // Restore camera position
-                glMap.setPitch(currentPitch);
-                glMap.setBearing(currentBearing);
-                glMap.setZoom(currentZoom);
-                glMap.setCenter(currentCenter);
+                // Restore camera position FIRST (before adding buildings)
+                if (savedCameraState) {
+                    glMap.jumpTo({
+                        center: savedCameraState.center,
+                        zoom: savedCameraState.zoom,
+                        bearing: savedCameraState.bearing,
+                        pitch: savedCameraState.pitch
+                    });
+                    console.log('Camera state restored:', savedCameraState);
+                }
+                
+                // Then add 3D buildings (without resetting camera)
+                add3DBuildings(glMap, false);
                 
                 // Re-enable 3D controls
                 glMap.dragRotate.enable();
                 glMap.touchPitch.enable();
+                
+                // Hide POI markers in 3D mode
+                hidePOIMarkers(event.target);
                 
                 // Reapply current LOD level
                 const lodSlider = document.getElementById('lod-range');

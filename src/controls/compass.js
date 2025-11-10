@@ -3,12 +3,17 @@
  * Handles the compass UI element for 3D mode
  */
 
+import { baseMaps, getGLMapFromLayer } from '../layers/basemaps.js';
+
 let compassUpdateInterval = null;
+let currentMap = null; // Store Leaflet map reference
 
 /**
  * Show the compass control
+ * @param {L.Map} map - Leaflet map instance
  */
-export function showCompass() {
+export function showCompass(map) {
+    currentMap = map;
     const compass = document.getElementById('compass');
     if (compass) {
         compass.classList.add('visible');
@@ -56,9 +61,19 @@ function stopCompassTracking() {
  * Update compass arrow rotation based on current map bearing
  */
 function updateCompassFromMap() {
-    // Access global mapbox3DLayer if available (set by 3D mode)
-    if (window._mapbox3DLayer && window._mapbox3DLayer._glMap) {
-        const bearing = window._mapbox3DLayer._glMap.getBearing();
+    // Find the active basemap layer and get its GL map
+    if (!currentMap) return;
+    
+    let activeGLMap = null;
+    for (const [name, baseLayer] of Object.entries(baseMaps)) {
+        if (currentMap.hasLayer(baseLayer)) {
+            activeGLMap = getGLMapFromLayer(baseLayer);
+            break;
+        }
+    }
+    
+    if (activeGLMap) {
+        const bearing = activeGLMap.getBearing();
         updateCompassRotation(bearing);
     }
 }
@@ -79,10 +94,20 @@ function updateCompassRotation(bearing) {
  * Reset map rotation to north
  */
 export function resetMapRotation() {
-    if (window._mapbox3DLayer && window._mapbox3DLayer._glMap) {
-        const mapboxMap = window._mapbox3DLayer._glMap;
+    if (!currentMap) return;
+    
+    // Find the active basemap layer and get its GL map
+    let activeGLMap = null;
+    for (const [name, baseLayer] of Object.entries(baseMaps)) {
+        if (currentMap.hasLayer(baseLayer)) {
+            activeGLMap = getGLMapFromLayer(baseLayer);
+            break;
+        }
+    }
+    
+    if (activeGLMap) {
         // Smoothly rotate back to north
-        mapboxMap.easeTo({
+        activeGLMap.easeTo({
             bearing: 0,
             pitch: 60,
             duration: 800
@@ -109,8 +134,10 @@ export function initializeCompass() {
 
 /**
  * Set the mapbox 3D layer reference for compass tracking
+ * @deprecated No longer needed - compass now auto-detects active layer
  * @param {Object} layer - Mapbox GL Leaflet layer
  */
 export function setMapbox3DLayer(layer) {
+    // Kept for backwards compatibility but no longer used
     window._mapbox3DLayer = layer;
 }

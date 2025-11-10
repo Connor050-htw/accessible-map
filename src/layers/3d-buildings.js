@@ -4,14 +4,33 @@
  */
 
 /**
- * Add 3D building extrusions to a Mapbox GL map
+ * Remove 3D building layer from the map
  * @param {mapboxgl.Map} mapboxMap - The Mapbox GL map instance
  */
-export function add3DBuildings(mapboxMap) {
+export function remove3DBuildings(mapboxMap) {
+    if (!mapboxMap) return;
+    
+    try {
+        // Remove the 3d-buildings layer if it exists
+        if (mapboxMap.getLayer('3d-buildings')) {
+            mapboxMap.removeLayer('3d-buildings');
+            console.log('3D buildings layer removed');
+        }
+    } catch (err) {
+        console.error('Error removing 3D buildings:', err);
+    }
+}
+
+/**
+ * Add 3D building extrusions to a Mapbox GL map
+ * @param {mapboxgl.Map} mapboxMap - The Mapbox GL map instance
+ * @param {boolean} setInitialCamera - Whether to set initial camera position (default: true)
+ */
+export function add3DBuildings(mapboxMap, setInitialCamera = true) {
     // Wait for style to be fully loaded
     if (!mapboxMap.isStyleLoaded()) {
         console.log('Style not yet loaded, waiting...');
-        mapboxMap.once('styledata', () => add3DBuildings(mapboxMap));
+        mapboxMap.once('styledata', () => add3DBuildings(mapboxMap, setInitialCamera));
         return;
     }
     
@@ -67,9 +86,11 @@ export function add3DBuildings(mapboxMap) {
         console.log('Style already has 3D building extrusions');
     }
     
-    // Set initial pitch and bearing for 3D view
-    mapboxMap.setPitch(60);
-    mapboxMap.setBearing(-17.6);
+    // Set initial pitch and bearing for 3D view (only on first activation)
+    if (setInitialCamera) {
+        mapboxMap.setPitch(60);
+        mapboxMap.setBearing(-17.6);
+    }
     
     // Configure controls
     configure3DControls(mapboxMap);
@@ -155,22 +176,16 @@ function configure3DControls(mapboxMap) {
             mapboxMap.doubleClickZoom.disable();
         }
         
-        // Custom bearing-aware panning handler
+        // Disable default drag rotate - we'll use custom version
+        if (mapboxMap.dragRotate) {
+            mapboxMap.dragRotate.disable();
+        }
+        
+        // Custom bearing-aware panning handler (left-click)
         setupBearingAwarePanning(mapboxMap);
         
-        // Enable rotation and pitch with right-click or Ctrl+left-click
-        if (mapboxMap.dragRotate) {
-            mapboxMap.dragRotate.enable();
-            console.log('Drag rotate enabled (Right-click or Ctrl+Left-click)');
-        }
-        
-        // Enable pitch control with mouse
-        if (mapboxMap.dragPan) {
-            mapboxMap.dragPan.enable();
-        }
-        
-        // Enable pitch with rotation
-        mapboxMap.dragRotate.enablePitchWithRotate = true;
+        // Custom rotation and pitch handler (right-click)
+        setupRotationAndPitchControl(mapboxMap);
         
         // Enable touch controls
         if (mapboxMap.touchZoomRotate) {
@@ -181,8 +196,6 @@ function configure3DControls(mapboxMap) {
             mapboxMap.touchPitch.enable();
             console.log('Touch pitch enabled');
         }
-        
-        console.log('Pitch control enabled: Right-click+drag (up/down = tilt, left/right = rotate)');
         
         // Smooth scrolling
         if (mapboxMap.scrollZoom) {
@@ -196,8 +209,7 @@ function configure3DControls(mapboxMap) {
         
         console.log('3D Controls:');
         console.log('- Left-click+drag: Pan map');
-        console.log('- Right-click+drag: Rotate/tilt map');
-        console.log('- Ctrl+Left-click+drag: Alternative rotation');
+        console.log('- Right-click+drag: Rotate (horizontal) and tilt (vertical)');
         console.log('- Scroll: Zoom');
     } catch (e) {
         console.error('Error enabling 3D controls:', e);
@@ -265,6 +277,76 @@ function setupBearingAwarePanning(mapboxMap) {
             isPanning = false;
             canvas.style.cursor = 'grab';
         }
+    });
+    
+    document.addEventListener('mouseup', handleMouseUp); // Catch mouseup outside canvas
+}
+
+/**
+ * Setup rotation (horizontal) and pitch (vertical) control with right-click
+ * @param {mapboxgl.Map} mapboxMap - The Mapbox GL map instance
+ */
+function setupRotationAndPitchControl(mapboxMap) {
+    let isRotating = false;
+    let lastX, lastY;
+    
+    const canvas = mapboxMap.getCanvas();
+    
+    canvas.addEventListener('mousedown', (e) => {
+        // Right-click or Ctrl+Left-click for rotation/pitch
+        if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
+            isRotating = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            canvas.style.cursor = 'move';
+            e.preventDefault();
+        }
+    });
+    
+    const handleMouseMove = (e) => {
+        if (!isRotating) return;
+        
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        
+        // Horizontal movement = bearing (rotation)
+        // Vertical movement = pitch (tilt)
+        const currentBearing = mapboxMap.getBearing();
+        const currentPitch = mapboxMap.getPitch();
+        
+        // Adjust sensitivity
+        const bearingSensitivity = 0.5; // degrees per pixel
+        const pitchSensitivity = 0.3;   // degrees per pixel
+        
+        const newBearing = currentBearing + (dx * bearingSensitivity); // Invertiert: + statt -
+        const newPitch = Math.max(0, Math.min(85, currentPitch - (dy * pitchSensitivity)));
+        
+        mapboxMap.setBearing(newBearing);
+        mapboxMap.setPitch(newPitch);
+        
+        lastX = e.clientX;
+        lastY = e.clientY;
+    };
+    
+    const handleMouseUp = (e) => {
+        if (isRotating && (e.button === 2 || (e.button === 0 && e.ctrlKey))) {
+            isRotating = false;
+            canvas.style.cursor = 'grab';
+        }
+    };
+    
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+    canvas.addEventListener('mouseleave', () => {
+        if (isRotating) {
+            isRotating = false;
+            canvas.style.cursor = 'grab';
+        }
+    });
+    
+    // Prevent context menu on right-click
+    canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
     });
     
     document.addEventListener('mouseup', handleMouseUp); // Catch mouseup outside canvas
