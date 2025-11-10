@@ -215,7 +215,6 @@ export function initializeAIControl(map) {
             mainBtn.setAttribute('aria-label', 'Start Audiodescription');
             mainBtn.innerHTML = '<img src="./images/speaker_icon.png" alt="" aria-hidden="true" width="18" height="18">';
 
-            // Events - Toggle between start and stop
             mainBtn.addEventListener('click', async () => { 
                 if (isSpeaking) {
                     stopAudio();
@@ -230,8 +229,7 @@ export function initializeAIControl(map) {
 
     map.addControl(new AIDescribeControl({ position: 'topleft' }));
 
-    // Reorder controls to: Zoom, Fullscreen, Audio, Layers
-    // Use setTimeout to ensure all controls are added
+    // Reorder controls: Zoom, Fullscreen, Audio, Layers
     setTimeout(() => {
         try {
             const corner = document.querySelector('.leaflet-top.leaflet-left');
@@ -241,17 +239,15 @@ export function initializeAIControl(map) {
             const layersCtrl = document.querySelector('.leaflet-control-layers');
             
             if (corner) {
-                // Remove all controls from corner
                 const controls = [zoomCtrl, fullscreenCtrl, aiCtrl, layersCtrl].filter(ctrl => ctrl);
                 
-                // Clear corner
                 controls.forEach(ctrl => {
                     if (ctrl && ctrl.parentNode === corner) {
                         corner.removeChild(ctrl);
                     }
                 });
                 
-                // Re-add in correct order: Zoom, Fullscreen, Audio, Layers
+                // Re-add in correct order
                 if (zoomCtrl) corner.appendChild(zoomCtrl);
                 if (fullscreenCtrl) corner.appendChild(fullscreenCtrl);
                 if (aiCtrl) corner.appendChild(aiCtrl);

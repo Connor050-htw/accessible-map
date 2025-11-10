@@ -70,7 +70,7 @@ function applyVectorLOD(level, glMap) {
         style.layers.forEach(layer => {
             const layerId = layer.id;
 
-            // Save original properties once
+            // Cache original layer properties for restoration at full detail level
             if (!originalLayerProps.has(layerId)) {
                 const vis = glMap.getLayoutProperty(layerId, 'visibility') || 'visible';
                 let opacity = 1.0;
@@ -86,21 +86,20 @@ function applyVectorLOD(level, glMap) {
                 originalLayerProps.set(layerId, { visibility: vis, opacity });
             }
 
-            // === Symbol layers (labels, icons) ===
+            // Symbol layers: labels and icons
+            // Level 0: Hide all | Level 1: Major only | Level 2: Show all
             if (layer.type === 'symbol') {
                 try {
                     if (level === 0) {
-                        // Low: Hide all labels
                         glMap.setLayoutProperty(layerId, 'visibility', 'none');
                     } else if (level === 1) {
-                        // Medium: Show major labels only (country, state, major cities)
+                        // Only show major geographic features (countries, states, major cities)
                         if (/country|state|province|capital|city/i.test(layerId) && !/minor|neighbourhood|hamlet/i.test(layerId)) {
                             glMap.setLayoutProperty(layerId, 'visibility', 'visible');
                         } else {
                             glMap.setLayoutProperty(layerId, 'visibility', 'none');
                         }
                     } else {
-                        // High: Show all labels (restore original)
                         const orig = originalLayerProps.get(layerId);
                         glMap.setLayoutProperty(layerId, 'visibility', orig?.visibility || 'visible');
                     }
@@ -109,7 +108,8 @@ function applyVectorLOD(level, glMap) {
                 }
             }
 
-            // === Administrative boundaries ===
+            // Administrative boundaries (borders)
+            // Dynamically adjust visibility based on admin level and current zoom
             if (layer.type === 'line' && /(admin|boundary)/i.test(layerId)) {
                 try {
                     // Detect admin level from layer ID (e.g., admin-0, admin-1, admin-2)

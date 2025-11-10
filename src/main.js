@@ -117,7 +117,7 @@ async function initializeApp() {
         handle3DBasemapChange(e);
     });
     
-    // 16. Export focusPopup for use by PinSearch plugin
+    // 17. Export focusPopup for use by PinSearch plugin
     window.focusPopup = focusPopup;
     
     console.log('Accessible Map initialized successfully!');

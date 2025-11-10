@@ -36,12 +36,10 @@ export function add3DBuildings(mapboxMap, setInitialCamera = true) {
     
     console.log('Adding 3D building layer...');
     
-    // Remove existing 3d-buildings layer if it exists
     if (mapboxMap.getLayer('3d-buildings')) {
         mapboxMap.removeLayer('3d-buildings');
     }
     
-    // Detect building source and source-layer from the current style
     const { buildingSource, buildingSourceLayer } = detectBuildingSource(mapboxMap);
     
     if (!buildingSource) {
@@ -49,10 +47,7 @@ export function add3DBuildings(mapboxMap, setInitialCamera = true) {
         return;
     }
 
-    // Find label layer to insert buildings beneath
     const labelLayerId = findLabelLayer(mapboxMap);
-    
-    // Check if style already has 3D extrusions
     const hasExtrusions = checkExistingExtrusions(mapboxMap);
     
     if (!hasExtrusions) {
@@ -86,13 +81,11 @@ export function add3DBuildings(mapboxMap, setInitialCamera = true) {
         console.log('Style already has 3D building extrusions');
     }
     
-    // Set initial pitch and bearing for 3D view (only on first activation)
     if (setInitialCamera) {
         mapboxMap.setPitch(60);
         mapboxMap.setBearing(-17.6);
     }
     
-    // Configure controls
     configure3DControls(mapboxMap);
 }
 
@@ -105,7 +98,7 @@ function detectBuildingSource(mapboxMap) {
     const style = mapboxMap.getStyle();
     const layers = style.layers || [];
     
-    // Try to detect from existing building layers
+    // Try to detect building source from existing building layers
     let buildingSource = null;
     let buildingSourceLayer = 'building';
     
@@ -120,13 +113,13 @@ function detectBuildingSource(mapboxMap) {
         }
     }
     
-    // If no layer hinted the source, try common vector source names
+    // Fallback: try common vector tile source names
     if (!buildingSource && style.sources) {
         const srcNames = Object.keys(style.sources);
         if (srcNames.includes('composite')) buildingSource = 'composite';
         else if (srcNames.includes('openmaptiles')) buildingSource = 'openmaptiles';
         else if (srcNames.includes('jawg')) buildingSource = 'jawg';
-        else if (srcNames.length) buildingSource = srcNames[0]; // Fallback to first source
+        else if (srcNames.length) buildingSource = srcNames[0];
     }
     
     return { buildingSource, buildingSourceLayer };
@@ -166,28 +159,21 @@ function checkExistingExtrusions(mapboxMap) {
  */
 function configure3DControls(mapboxMap) {
     try {
-        // Disable default drag pan - we'll use custom bearing-aware version
         if (mapboxMap.dragPan) {
             mapboxMap.dragPan.disable();
         }
         
-        // Disable double-click zoom to prevent conflicts
         if (mapboxMap.doubleClickZoom) {
             mapboxMap.doubleClickZoom.disable();
         }
         
-        // Disable default drag rotate - we'll use custom version
         if (mapboxMap.dragRotate) {
             mapboxMap.dragRotate.disable();
         }
         
-        // Custom bearing-aware panning handler (left-click)
         setupBearingAwarePanning(mapboxMap);
-        
-        // Custom rotation and pitch handler (right-click)
         setupRotationAndPitchControl(mapboxMap);
         
-        // Enable touch controls
         if (mapboxMap.touchZoomRotate) {
             mapboxMap.touchZoomRotate.enableRotation();
             console.log('Touch rotation enabled');
@@ -197,12 +183,10 @@ function configure3DControls(mapboxMap) {
             console.log('Touch pitch enabled');
         }
         
-        // Smooth scrolling
         if (mapboxMap.scrollZoom) {
             mapboxMap.scrollZoom.setWheelZoomRate(1/200);
         }
         
-        // Keyboard controls
         if (mapboxMap.keyboard) {
             mapboxMap.keyboard.enable();
         }
@@ -218,6 +202,7 @@ function configure3DControls(mapboxMap) {
 
 /**
  * Setup bearing-aware panning so map pans relative to screen, not north
+ * This makes dragging intuitive even when the map is rotated
  * @param {mapboxgl.Map} mapboxMap - The Mapbox GL map instance
  */
 function setupBearingAwarePanning(mapboxMap) {
@@ -228,7 +213,6 @@ function setupBearingAwarePanning(mapboxMap) {
     canvas.style.cursor = 'grab';
     
     canvas.addEventListener('mousedown', (e) => {
-        // Only for left click without Ctrl (Ctrl is for rotation)
         if (e.button === 0 && !e.ctrlKey) {
             isPanning = true;
             lastX = e.clientX;
@@ -244,10 +228,9 @@ function setupBearingAwarePanning(mapboxMap) {
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
         
-        // Get current bearing in radians
+        // Rotate mouse movement by current bearing to make panning screen-relative
+        // This ensures dragging up always moves the map up on screen, regardless of rotation
         const bearingRad = mapboxMap.getBearing() * Math.PI / 180;
-        
-        // Rotate mouse movement by bearing to make it screen-relative
         const cos = Math.cos(bearingRad);
         const sin = Math.sin(bearingRad);
         const rotatedDx = dx * cos + dy * sin;
@@ -293,7 +276,7 @@ function setupRotationAndPitchControl(mapboxMap) {
     const canvas = mapboxMap.getCanvas();
     
     canvas.addEventListener('mousedown', (e) => {
-        // Right-click or Ctrl+Left-click for rotation/pitch
+        // Right-click or Ctrl+Left-click triggers rotation/pitch mode
         if (e.button === 2 || (e.button === 0 && e.ctrlKey)) {
             isRotating = true;
             lastX = e.clientX;
@@ -309,16 +292,18 @@ function setupRotationAndPitchControl(mapboxMap) {
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
         
-        // Horizontal movement = bearing (rotation)
-        // Vertical movement = pitch (tilt)
         const currentBearing = mapboxMap.getBearing();
         const currentPitch = mapboxMap.getPitch();
         
-        // Adjust sensitivity
-        const bearingSensitivity = 0.5; // degrees per pixel
-        const pitchSensitivity = 0.3;   // degrees per pixel
+        // Sensitivity: degrees per pixel of mouse movement
+        const bearingSensitivity = 0.5;
+        const pitchSensitivity = 0.3;
         
-        const newBearing = currentBearing + (dx * bearingSensitivity); // Invertiert: + statt -
+        // Horizontal movement controls bearing (rotation around z-axis)
+        // Inverted to match intuitive drag direction
+        const newBearing = currentBearing + (dx * bearingSensitivity);
+        
+        // Vertical movement controls pitch (tilt), clamped between 0 and 85 degrees
         const newPitch = Math.max(0, Math.min(85, currentPitch - (dy * pitchSensitivity)));
         
         mapboxMap.setBearing(newBearing);
@@ -344,10 +329,9 @@ function setupRotationAndPitchControl(mapboxMap) {
         }
     });
     
-    // Prevent context menu on right-click
     canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
     });
     
-    document.addEventListener('mouseup', handleMouseUp); // Catch mouseup outside canvas
+    document.addEventListener('mouseup', handleMouseUp);
 }
