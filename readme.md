@@ -4,6 +4,7 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 
 ## TODO
 
+- Modell durch qwen3-vl:2b-instruct ersetzen -> "ollama pull qwen3-vl:2b-instruct"
 - (Ziehen im 3D bei gedrehter Karte ist buggy)
 
 ## Inhalt
@@ -31,13 +32,28 @@ Einmalige Einrichtung und Start in zwei Terminals:
 Ollama‑Modell laden:
 ollama pull qwen3-vl:4b
 
-Backend starten:
+Backend starten (home):
 cd map-to-speech-demo\api
 python -m venv .venv
 .venv\Scripts\activate
 (pip install -r requirements.txt)
 set OLLAMA_MODEL=qwen3-vl:4b
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+
+Backend starten (HTW):
+cd map-to-speech-demo\api
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+. .\.venv\Scripts\Activate.ps1
+(pip install -r requirements.txt)
+set OLLAMA_MODEL=qwen3-vl:4b
+uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+
+Fehler "Ollama error: unknown error"
+-> timeout hochstellen: das modell braucht sehr lange, das ist ein simpler timeout fehler
+
+check ob das modell läuft: 
+http://127.0.0.1:11434/api/tags
 
 ```
 

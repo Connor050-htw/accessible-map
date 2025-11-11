@@ -56,13 +56,13 @@ export async function captureMapAsDataUrl() {
                 // Try to get the image data directly from the canvas
                 const dataUrl = glCanvas.toDataURL('image/png');
                 console.log('Successfully captured from Mapbox GL canvas, data URL length:', dataUrl.length);
-                
+
                 // Validate that we didn't get an empty/gray image
                 if (dataUrl.length < 1000) {
                     console.error('Captured image seems too small, falling back to html2canvas');
                     throw new Error('Canvas capture produced invalid image');
                 }
-                
+                // Return the original capture (no client-side downscaling)
                 return dataUrl;
             } else {
                 console.warn('Mapbox GL canvas not found');
