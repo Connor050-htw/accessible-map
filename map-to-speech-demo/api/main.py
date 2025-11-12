@@ -10,7 +10,7 @@ from pydantic import BaseModel
 # Configuration via environment with safe defaults
 ALLOW_ORIGINS = os.environ.get("ALLOW_ORIGINS", "*")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3-vl:4b")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3-vl:2b-instruct")
 
 app = FastAPI()
 
@@ -43,7 +43,7 @@ async def post_description(request_params: MapParams):
     else:
         b64_data = request_params.data_url
 
-    # Create language-specific prompt
+    # Create language-specific prompt 
     if request_params.language == "de":
         prompt = (
             "Beschreibe diese Karte in etwa 50 Wörtern für sehbehinderte Nutzer. "

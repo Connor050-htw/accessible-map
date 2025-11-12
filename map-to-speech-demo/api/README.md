@@ -9,7 +9,7 @@ This FastAPI service powers the AI description button in the web app. It sends a
 - Model pulled locally (recommended):
 
 ```
-ollama pull qwen3-vl:4b
+ollama pull qwen3-vl:2b-instruct
 ```
 
 ## Install and run
@@ -20,7 +20,7 @@ Create a virtual environment (recommended), install deps, and start the server:
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-set OLLAMA_MODEL=qwen3-vl:4b
+set OLLAMA_MODEL=qwen3-vl:2b-instruct
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -28,7 +28,7 @@ Environment variables (optional):
 
 - `ALLOW_ORIGINS`: Comma-separated list of allowed origins for CORS. Default: `*`.
 - `OLLAMA_HOST`: Base URL for your Ollama server. Default: `http://127.0.0.1:11434`.
-- `OLLAMA_MODEL`: Model name. Default: `qwen3-vl:4b`.
+- `OLLAMA_MODEL`: Model name. Default: `qwen3-vl:2b-instruct`.
 
 Note: If the configured model is not available locally, the server will query `/api/tags` and automatically retry with an installed Qwen-VL model (preferring Qwen3).
 

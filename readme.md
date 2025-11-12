@@ -19,7 +19,7 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 - Windows/macOS/Linux
 - Python 3.10+ (für das Backend)
 - [Ollama](https://ollama.com/) installiert und gestartet (Standard: `http://127.0.0.1:11434`)
-- Ein Qwen‑VL‑Modell lokal vorhanden (empfohlen: `qwen3-vl:4b`)
+- Ein Qwen‑VL‑Modell lokal vorhanden (empfohlen: `qwen3-vl:2b-instruct`)
 
 ## Projekt starten
 
@@ -30,14 +30,14 @@ Einmalige Einrichtung und Start in zwei Terminals:
 ```cmd
 
 Ollama‑Modell laden:
-ollama pull qwen3-vl:4b
+ollama pull qwen3-vl:2b-instruct
 
 Backend starten (home):
 cd map-to-speech-demo\api
 python -m venv .venv
 .venv\Scripts\activate
 (pip install -r requirements.txt)
-set OLLAMA_MODEL=qwen3-vl:4b
+set OLLAMA_MODEL=qwen3-vl:2b-instruct
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 
 Backend starten (HTW):
@@ -46,7 +46,7 @@ python -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 . .\.venv\Scripts\Activate.ps1
 (pip install -r requirements.txt)
-set OLLAMA_MODEL=qwen3-vl:4b
+set OLLAMA_MODEL=qwen3-vl:2b-instruct
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 
 Fehler "Ollama error: unknown error"
@@ -64,7 +64,7 @@ cd map-to-speech-demo\api
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-set OLLAMA_MODEL=qwen3-vl:4b
+set OLLAMA_MODEL=qwen3-vl:2b-instruct
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -73,7 +73,7 @@ Optionale Umgebungsvariablen (Windows cmd):
 ```cmd
 set ALLOW_ORIGINS=*
 set OLLAMA_HOST=http://127.0.0.1:11434
-set OLLAMA_MODEL=qwen3-vl:4b
+set OLLAMA_MODEL=qwen3-vl:2b-instruct
 ```
 
 ## API (lokal)
