@@ -6,6 +6,39 @@
 import { baseMaps } from '../layers/basemaps.js';
 
 /**
+ * Initialize settings navigation button in header
+ */
+function initializeSettingsNavButton() {
+    const settingsButton = document.getElementById('settings-nav-button');
+    if (!settingsButton) return;
+
+    settingsButton.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent default anchor behavior
+        
+        const sidebar = document.getElementById('sidebar');
+        const mapConfigToggle = document.getElementById('map-config-toggle');
+        const mapConfigContent = document.getElementById('map-config-content');
+
+        // Ensure sidebar is visible
+        if (sidebar && sidebar.classList.contains('hidden')) {
+            document.getElementById('sidebar-button')?.click();
+        }
+
+        // Ensure map configuration section is expanded
+        if (mapConfigContent && mapConfigContent.classList.contains('hidden')) {
+            mapConfigToggle?.click();
+        }
+
+        // Set focus on the toggle button for accessibility (no scrolling)
+        if (mapConfigToggle) {
+            setTimeout(() => {
+                mapConfigToggle.focus();
+            }, 100);
+        }
+    });
+}
+
+/**
  * Initialize sidebar toggle functionality
  * @param {L.Map} map - Leaflet map instance
  */
@@ -52,6 +85,9 @@ export function initializeSidebar(map) {
             sidebarButton.click();
         }
     });
+
+    // Initialize settings navigation button in header
+    initializeSettingsNavButton();
 }
 
 /**
