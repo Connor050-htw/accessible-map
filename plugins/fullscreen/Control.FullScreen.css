@@ -1,10 +1,10 @@
 .fullscreen-icon {
 	background-image: url('icon-fullscreen.svg');
-	background-size: 26px 52px;
+	background-size: calc(var(--map-button-size, 30px) * 0.87) calc(var(--map-button-size, 30px) * 1.73);
 }
 
 .fullscreen-icon.leaflet-fullscreen-on {
-	background-position: 0 -26px;
+	background-position: 0 calc(var(--map-button-size, 30px) * -0.87);
 }
 
 .leaflet-touch .fullscreen-icon {

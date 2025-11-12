@@ -8,18 +8,23 @@
  */
 export function initializeFontSizeControls() {
     let fontSize = 16;
+    let buttonSize = 30; // Standardgröße für Map-Buttons
     const increaseBtn = document.getElementById('increase-font-size');
     const decreaseBtn = document.getElementById('decrease-font-size');
 
     function increaseFontSize() {
         fontSize += 2;
+        buttonSize += 5;
         document.documentElement.style.fontSize = fontSize + 'px';
+        document.documentElement.style.setProperty('--map-button-size', buttonSize + 'px');
         document.body.style.gridTemplateRows = 'auto max-content';
     }
 
     function decreaseFontSize() {
         fontSize -= 2;
+        buttonSize -= 5;
         document.documentElement.style.fontSize = fontSize + 'px';
+        document.documentElement.style.setProperty('--map-button-size', buttonSize + 'px');
     }
 
     if (increaseBtn) increaseBtn.addEventListener('click', increaseFontSize);

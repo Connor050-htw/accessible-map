@@ -38,8 +38,8 @@
 }
 
 .leaflet-control-ai .ai-main-btn {
-    width: 30px;
-    height: 30px;
+    width: var(--map-button-size, 30px);
+    height: var(--map-button-size, 30px);
     display: block;
     padding: 0;
     margin: 0;
@@ -52,7 +52,7 @@
     text-align: center;
     text-decoration: none;
     color: #000;
-    line-height: 30px;
+    line-height: var(--map-button-size, 30px);
 }
 
 .leaflet-control-ai .ai-main-btn img {

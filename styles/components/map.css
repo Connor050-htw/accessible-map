@@ -13,6 +13,27 @@ main {
     width: 100%;
 }
 
+/* Override Leaflet default control button sizes */
+.leaflet-control-zoom a,
+.leaflet-control-fullscreen a,
+.leaflet-control-layers-toggle {
+    width: var(--map-button-size, 30px) !important;
+    height: var(--map-button-size, 30px) !important;
+    line-height: var(--map-button-size, 30px) !important;
+}
+
+/* Scale the symbols inside zoom buttons */
+.leaflet-control-zoom a {
+    font-size: calc(var(--map-button-size, 30px) * 0.67) !important;
+}
+
+/* Ensure fullscreen button container also respects the size */
+.leaflet-control-fullscreen,
+.leaflet-bar a {
+    width: var(--map-button-size, 30px) !important;
+    height: var(--map-button-size, 30px) !important;
+}
+
 /* Map labels for POI markers */
 main .label {
     display: none;

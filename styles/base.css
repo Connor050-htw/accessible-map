@@ -2,6 +2,10 @@
  * Base Styles - Global resets, typography, and foundational styles
  */
 
+:root {
+    --map-button-size: 30px; /* Standardgröße für Map-Buttons */
+}
+
 * {
     margin: 0;
     padding: 0;

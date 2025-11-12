@@ -4,7 +4,6 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 
 ## TODO
 
-- TODO: Spracheingabe, also z.B: "Zeige mir Burg ..."
 - Einfache Maske wenn man die Website öffnet - ODER oben kleine Buttons opben in der kopfzeile
 - (Ziehen im 3D bei gedrehter Karte ist buggy)
 

@@ -10,8 +10,9 @@
 
 .search-input {
   width: 200px;
-  height: 30px;
+  height: var(--map-button-size, 30px);
   padding: 5px 30px 5px 10px;
+  font-size: calc(var(--map-button-size, 30px) * 0.47); /* Proportional zur Button-Größe */
 }
 
 .search-icon {

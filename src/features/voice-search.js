@@ -83,7 +83,12 @@ function createVoiceControl(map) {
             voiceBtn.id = 'voice-control-btn';
             voiceBtn.title = 'Sprachsuche (Strg+K)';
             voiceBtn.setAttribute('aria-label', 'Sprachsuche');
-            voiceBtn.innerHTML = '🎤';
+            
+            // Create img element for mic icon
+            const micIcon = L.DomUtil.create('img', 'voice-mic-icon', voiceBtn);
+            micIcon.src = './images/mic.jpg';
+            micIcon.alt = '';
+            micIcon.setAttribute('aria-hidden', 'true');
 
             voiceBtn.addEventListener('click', () => toggleVoiceSearch(map));
 
