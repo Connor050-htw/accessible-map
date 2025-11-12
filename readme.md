@@ -4,7 +4,8 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 
 ## TODO
 
-- Modell durch qwen3-vl:2b-instruct ersetzen -> "ollama pull qwen3-vl:2b-instruct"
+- TODO: Spracheingabe, also z.B: "Zeige mir Burg ..."
+- Einfache Maske wenn man die Website öffnet - ODER oben kleine Buttons opben in der kopfzeile
 - (Ziehen im 3D bei gedrehter Karte ist buggy)
 
 ## Inhalt
@@ -125,3 +126,9 @@ curl http://127.0.0.1:11434/api/tags
 
 - Das Demo‑Backend basiert auf einer adaptierten Variante des „map‑to‑speech“ Ansatzes; OpenAI wurde durch ein lokales Ollama‑VLM ersetzt.
 - Frontend ist Leaflet‑basiert mit zusätzlichen Plugins. Siehe Ordner `plugins/` und enthaltene Lizenzen.
+
+## Relevante Änderung für Doku
+
+- Raster Tiles (png) -> Vector Tiles (PBF = Vektordaten) damit diese steuerbar sind, z.B. beim LoD
+- map-to-speech repo für die KI
+- 3D Ansicht

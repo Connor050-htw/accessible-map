@@ -1,0 +1,52 @@
+/* State: Listening (blauer Hintergrund, gedrückt) */
+.leaflet-control-voice .voice-control-btn.listening {
+    background-color: #e0f0ff;
+    border: 3px solid #007bff;
+    color: #007bff;
+    transform: scale(0.96);
+    filter: brightness(0.95);
+}
+/**
+ * Voice Search Control - Voice search controls
+ */
+
+/* Leaflet Voice control */
+.leaflet-control-voice {
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    border-radius: 4px;
+}
+
+.leaflet-control-voice .voice-control-btn {
+    width: 30px;
+    height: 30px;
+    display: block;
+    padding: 0;
+    margin: 0;
+    background-color: #fff;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    color: #000;
+    line-height: 30px;
+    font-size: 16px;
+}
+
+.leaflet-control-voice .voice-control-btn:hover { 
+    background-color: #f4f4f4;
+}
+
+/* State: Success (green border, white background) */
+.leaflet-control-voice .voice-control-btn.success {
+    background-color: #fff;
+    border: 3px solid #28a745;
+}
+
+/* State: Error (red border, white background) */
+.leaflet-control-voice .voice-control-btn.error {
+    background-color: #fff;
+    border: 3px solid #dc3545;
+}

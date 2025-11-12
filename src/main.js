@@ -14,6 +14,7 @@ import { loadPOIMarkers } from './layers/poi-markers.js';
 import { initializeSettings } from './features/settings.js';
 import { enable3DMode, disable3DMode, is3DModeEnabled, handle3DBasemapChange } from './features/3d-mode.js';
 import { initializeLODControl } from './features/lod-control.js';
+import { initializeVoiceSearch } from './features/voice-search.js';
 
 // Controls
 import { initializeCompass, showCompass, hideCompass } from './controls/compass.js';
@@ -105,7 +106,10 @@ async function initializeApp() {
     // 13. Initialize AI control
     initializeAIControl(map);
     
-    // 14. Setup collapsible sections
+    // 14. Initialize voice search
+    initializeVoiceSearch(map);
+    
+    // 15. Setup collapsible sections
     setupCollapsible('map-config-toggle', 'map-config-content');
     setupCollapsible('symbols-toggle', 'symbols');
     
