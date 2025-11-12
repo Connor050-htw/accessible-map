@@ -19,6 +19,7 @@
 
 import { is3DModeEnabled } from './3d-mode.js';
 import { showPOIMarkers } from '../layers/poi-markers.js';
+import { applyLabelVisibilityFromSetting } from './settings.js';
 import { getGLMapFromLayer, baseMaps } from '../layers/basemaps.js';
 
 let currentLevel = 2;
@@ -199,10 +200,8 @@ function applyPOILOD(level, map) {
     
     // POIs always visible in 2D mode - no changes based on LOD level
     showPOIMarkers(map);
-    // Labels always visible in 2D mode
-    document.querySelectorAll('.label').forEach(el => { 
-        el.style.display = ''; 
-    });
+    // Keep label visibility consistent with user setting
+    applyLabelVisibilityFromSetting();
 }
 
 /**

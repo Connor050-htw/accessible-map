@@ -14,24 +14,32 @@ main {
 }
 
 /* Override Leaflet default control button sizes */
+/* Dynamische Button-Größe: Basis * Skalierungsfaktor */
+:root {
+    --map-button-base: 30px;
+}
+body { /* falls JS kontinuierlich erhöht: map-button-size kann überschrieben werden */
+    --map-button-size: calc(var(--map-button-base) * var(--size-scale, 1));
+}
+
 .leaflet-control-zoom a,
 .leaflet-control-fullscreen a,
 .leaflet-control-layers-toggle {
-    width: var(--map-button-size, 30px) !important;
-    height: var(--map-button-size, 30px) !important;
-    line-height: var(--map-button-size, 30px) !important;
+    width: var(--map-button-size) !important;
+    height: var(--map-button-size) !important;
+    line-height: var(--map-button-size) !important;
 }
 
 /* Scale the symbols inside zoom buttons */
 .leaflet-control-zoom a {
-    font-size: calc(var(--map-button-size, 30px) * 0.67) !important;
+    font-size: calc(var(--map-button-size) * 0.67) !important;
 }
 
 /* Ensure fullscreen button container also respects the size */
 .leaflet-control-fullscreen,
 .leaflet-bar a {
-    width: var(--map-button-size, 30px) !important;
-    height: var(--map-button-size, 30px) !important;
+    width: var(--map-button-size) !important;
+    height: var(--map-button-size) !important;
 }
 
 /* Map labels for POI markers */

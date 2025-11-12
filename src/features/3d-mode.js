@@ -6,6 +6,7 @@
 import { MAPBOX_TOKEN, MAPTILER_KEY, JAWG_ACCESS_TOKEN } from '../core/config.js';
 import { baseMaps, getGLMapFromLayer } from '../layers/basemaps.js';
 import { add3DBuildings, remove3DBuildings } from '../layers/3d-buildings.js';
+import { applyLabelVisibilityFromSetting } from './settings.js';
 import { hidePOIMarkers, showPOIMarkers } from '../layers/poi-markers.js';
 import { applyLOD } from './lod-control.js';
 
@@ -13,6 +14,61 @@ import { applyLOD } from './lod-control.js';
 let buildings3DEnabled = false;
 let currentBasemap = null;
 let savedCameraState = null; // Store camera state for basemap changes
+let keyboardHandler = null; // Document-level Shift+Arrow handler for 3D
+
+function getCurrentGLMap() {
+    try {
+        return currentBasemap && (typeof currentBasemap.getMapboxMap === 'function'
+            ? currentBasemap.getMapboxMap()
+            : currentBasemap._glMap || null);
+    } catch {
+        return null;
+    }
+}
+
+function attach3DKeyboardHandler() {
+    if (keyboardHandler) return; // already attached
+    keyboardHandler = (event) => {
+        if (!buildings3DEnabled || !event.shiftKey) return;
+        const tag = (event.target && event.target.tagName) ? event.target.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || (event.target && event.target.isContentEditable)) return;
+        const glMap = getCurrentGLMap();
+        if (!glMap) return;
+
+        const bearingStep = 5; // degrees per key press
+        const pitchStep = 5;   // degrees per key press
+        const key = event.key;
+        let handled = false;
+
+        if (key === 'ArrowLeft') {
+            glMap.setBearing(glMap.getBearing() - bearingStep);
+            handled = true;
+        } else if (key === 'ArrowRight') {
+            glMap.setBearing(glMap.getBearing() + bearingStep);
+            handled = true;
+        } else if (key === 'ArrowUp') {
+            const nextPitch = Math.min(85, glMap.getPitch() + pitchStep);
+            glMap.setPitch(nextPitch);
+            handled = true;
+        } else if (key === 'ArrowDown') {
+            const nextPitch = Math.max(0, glMap.getPitch() - pitchStep);
+            glMap.setPitch(nextPitch);
+            handled = true;
+        }
+
+        if (handled) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+    document.addEventListener('keydown', keyboardHandler, true);
+}
+
+function detach3DKeyboardHandler() {
+    if (!keyboardHandler) return;
+    document.removeEventListener('keydown', keyboardHandler, true);
+    keyboardHandler = null;
+}
 
 /**
  * Enable 3D mode
@@ -53,7 +109,7 @@ export function enable3DMode(map, showCompass) {
             return false;
         }
         
-        // Hide POI markers and labels in 3D mode
+    // Hide POI markers and labels in 3D mode
         hidePOIMarkers(map);
         
         // Enable 3D controls on existing GL layer
@@ -65,10 +121,12 @@ export function enable3DMode(map, showCompass) {
             if (glMap.isStyleLoaded()) {
                 console.log('Adding 3D buildings...');
                 add3DBuildings(glMap);
+                attach3DKeyboardHandler();
             } else {
                 glMap.once('idle', () => {
                     console.log('Style ready, adding 3D buildings...');
                     add3DBuildings(glMap);
+                    attach3DKeyboardHandler();
                 });
             }
         };
@@ -101,6 +159,7 @@ export function enable3DMode(map, showCompass) {
 export function disable3DMode(map, hideCompass) {
     buildings3DEnabled = false;
     console.log('3D View disabled');
+    detach3DKeyboardHandler();
     
     try {
         // Remove 3D from ALL basemap layers, not just the current one
@@ -122,8 +181,9 @@ export function disable3DMode(map, hideCompass) {
         
         console.log('3D controls disabled for all layers, map reset to 2D');
         
-        // Show POI markers and labels again
+        // Show POI markers and labels again and sync with labels setting
         showPOIMarkers(map);
+        applyLabelVisibilityFromSetting();
         
         // Hide compass
         if (hideCompass) hideCompass();
@@ -195,6 +255,7 @@ export function handle3DBasemapChange(event) {
                 // Re-enable 3D controls
                 glMap.dragRotate.enable();
                 glMap.touchPitch.enable();
+                attach3DKeyboardHandler();
                 
                 // Hide POI markers in 3D mode
                 hidePOIMarkers(event.target);

@@ -3,7 +3,7 @@
  */
 
 :root {
-    --map-button-size: 30px; /* Standardgröße für Map-Buttons */
+    --map-button-base: 30px; /* Basisgröße für Map-Buttons, wird multipliziert mit --size-scale */
 }
 
 * {

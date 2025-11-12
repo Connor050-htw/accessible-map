@@ -16,8 +16,21 @@
         <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet' />
         <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
         <script src='https://unpkg.com/mapbox-gl-leaflet@0.0.16/leaflet-mapbox-gl.js'></script>
+        <link rel="stylesheet" href="styles/size-accessibility.css" />
     </head>
     <body>
+        <!-- Modal Overlay for Size Selection -->
+        <div id="size-modal-overlay" style="position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;padding:2.5rem 2rem;border-radius:1.2rem;box-shadow:0 2px 16px rgba(0,0,0,0.2);text-align:center;min-width:260px;max-width:90vw;">
+                <h2 style="margin-bottom:1.5rem;">Wähle die Größe der Elemente</h2>
+                <div style="display:flex;gap:1.2rem;justify-content:center;">
+                    <button class="size-select-btn" data-size="normal" style="font-size:1rem;padding:0.7em 1.5em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Normal</button>
+                    <button class="size-select-btn" data-size="big" style="font-size:1.2rem;padding:0.8em 1.7em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Big</button>
+                    <button class="size-select-btn" data-size="bigger" style="font-size:1.4rem;padding:0.9em 2em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Bigger</button>
+                </div>
+                <!--<p style="margin-top:1.5rem;font-size:0.95em;color:#444;">Diese Einstellung wird nicht gespeichert.</p> -->
+            </div>
+        </div>
         <!-- skip to map link -->
         <a href="#map" class="skip-link">Skip to Map</a>
         <header>
@@ -267,5 +280,26 @@
         <script src="mapbox-config.js"></script>
         <!-- Main application entry point (modular structure) -->
         <script src="src/main.js" type="module"></script>
+        <script>
+        // Modal für Größenauswahl
+        window.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.getElementById('size-modal-overlay');
+            const btns = overlay.querySelectorAll('.size-select-btn');
+            function setSize(size) {
+                document.body.classList.remove('size-normal', 'size-big', 'size-bigger');
+                if (size === 'normal') document.body.classList.add('size-normal');
+                if (size === 'big') document.body.classList.add('size-big');
+                if (size === 'bigger') document.body.classList.add('size-bigger');
+            }
+            btns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    setSize(btn.dataset.size);
+                    overlay.style.display = 'none';
+                });
+            });
+            // Standard: normal
+            setSize('normal');
+        });
+        </script>
     </body>
 </html>

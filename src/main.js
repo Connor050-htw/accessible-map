@@ -43,6 +43,18 @@ async function initializeApp() {
     // 2. Add default basemap
     const defaultBasemap = getDefaultBasemap();
     defaultBasemap.addTo(map);
+    // Ensure GL layer doesn't handle its own interactions in 2D (Leaflet should own them)
+    try {
+        const glMap = (typeof defaultBasemap.getMapboxMap === 'function')
+            ? defaultBasemap.getMapboxMap()
+            : defaultBasemap._glMap || null;
+        if (glMap) {
+            if (glMap.keyboard) glMap.keyboard.disable();
+            if (glMap.dragPan) glMap.dragPan.disable();
+            if (glMap.scrollZoom) glMap.scrollZoom.disable();
+            if (glMap.doubleClickZoom) glMap.doubleClickZoom.disable();
+        }
+    } catch {}
     
     // 3. Add layer control
     const layerControl = addLayerControl(map);
@@ -118,7 +130,24 @@ async function initializeApp() {
     
     // 16. Setup basemap change handler for 3D mode
     map.on('baselayerchange', (e) => {
-        handle3DBasemapChange(e);
+        // If 3D mode is active, defer to 3D handler (it will manage interactions)
+        if (is3DModeEnabled && typeof is3DModeEnabled === 'function' && is3DModeEnabled()) {
+            handle3DBasemapChange(e);
+            return;
+        }
+        // In 2D mode: disable GL interactions on the newly active basemap
+        try {
+            const layer = e.layer;
+            const glMap = (typeof layer.getMapboxMap === 'function')
+                ? layer.getMapboxMap()
+                : layer._glMap || null;
+            if (glMap) {
+                if (glMap.keyboard) glMap.keyboard.disable();
+                if (glMap.dragPan) glMap.dragPan.disable();
+                if (glMap.scrollZoom) glMap.scrollZoom.disable();
+                if (glMap.doubleClickZoom) glMap.doubleClickZoom.disable();
+            }
+        } catch {}
     });
     
     // 17. Export focusPopup for use by PinSearch plugin

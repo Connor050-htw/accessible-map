@@ -7,24 +7,30 @@
  * Initialize font size controls
  */
 export function initializeFontSizeControls() {
-    let fontSize = 16;
-    let buttonSize = 30; // Standardgröße für Map-Buttons
     const increaseBtn = document.getElementById('increase-font-size');
     const decreaseBtn = document.getElementById('decrease-font-size');
 
-    function increaseFontSize() {
-        fontSize += 2;
-        buttonSize += 5;
+    // Startwerte dynamisch ermitteln
+    let fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    let baseVar = getComputedStyle(document.documentElement).getPropertyValue('--map-button-base').trim();
+    let buttonSize = baseVar ? parseFloat(baseVar) : 30;
+
+    function applySizes() {
         document.documentElement.style.fontSize = fontSize + 'px';
-        document.documentElement.style.setProperty('--map-button-size', buttonSize + 'px');
+        document.documentElement.style.setProperty('--map-button-base', buttonSize + 'px');
+    }
+
+    function increaseFontSize() {
+        fontSize += 2; // feiner Schritt für Text
+        buttonSize += 5; // feiner Schritt für Map-Buttons
+        applySizes();
         document.body.style.gridTemplateRows = 'auto max-content';
     }
 
     function decreaseFontSize() {
-        fontSize -= 2;
-        buttonSize -= 5;
-        document.documentElement.style.fontSize = fontSize + 'px';
-        document.documentElement.style.setProperty('--map-button-size', buttonSize + 'px');
+        fontSize = Math.max(8, fontSize - 2);
+        buttonSize = Math.max(20, buttonSize - 5);
+        applySizes();
     }
 
     if (increaseBtn) increaseBtn.addEventListener('click', increaseFontSize);
@@ -55,18 +61,27 @@ export function initializeLabelToggle() {
     const labelsBtn = document.getElementById('labels-checkbox');
 
     if (labelsBtn) {
-        labelsBtn.addEventListener('change', () => {
-            const labels = document.querySelectorAll('.label');
-            labels.forEach(label => {
-                if (labelsBtn.checked) {
-                    label.style.display = 'block';
-                    label.removeAttribute('tabindex');
-                } else {
-                    label.style.display = 'none';
-                }
-            });
-        });
+        labelsBtn.addEventListener('change', applyLabelVisibilityFromSetting);
+        // Apply initial state on load
+        applyLabelVisibilityFromSetting();
     }
+}
+
+/**
+ * Apply label visibility based on the current state of the labels checkbox
+ */
+export function applyLabelVisibilityFromSetting() {
+    const labelsBtn = document.getElementById('labels-checkbox');
+    const show = !!(labelsBtn && labelsBtn.checked);
+    const labels = document.querySelectorAll('.label');
+    labels.forEach(label => {
+        if (show) {
+            label.style.display = 'block';
+            label.removeAttribute('tabindex');
+        } else {
+            label.style.display = 'none';
+        }
+    });
 }
 
 

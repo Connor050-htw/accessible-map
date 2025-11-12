@@ -21,7 +21,11 @@ function createVectorLayer(style, name) {
         dragRotate: false, // 2D by default
         pitchWithRotate: false,
         touchPitch: false,
-        dragPan: true,
+        // Important: let Leaflet own pan/zoom/keyboard in 2D to keep markers in sync
+        dragPan: false,
+        scrollZoom: false,
+        doubleClickZoom: false,
+        keyboard: false,
         // MUST be true to allow canvas export for AI description
         preserveDrawingBuffer: true,
         // Slightly lower update rate to avoid jumpy re-renders on rapid zoom

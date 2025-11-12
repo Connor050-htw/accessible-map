@@ -1,0 +1,39 @@
+/*
+ * UI size classes for accessibility
+ */
+
+body.size-normal {
+    font-size: 100%;
+}
+
+body.size-big {
+    font-size: 120%;
+}
+
+body.size-bigger {
+    font-size: 140%;
+}
+
+/* Map button scaling factor driven by size class */
+body {
+    --size-scale: 1;
+}
+body.size-normal {
+    --size-scale: 1;
+}
+body.size-big {
+    --size-scale: 1.2;
+}
+body.size-bigger {
+    --size-scale: 1.4;
+}
+
+/* Optional: make buttons and inputs scale with font size */
+button, input, select {
+    font-size: 1em;
+}
+
+/* Sidebar and map controls scaling */
+#sidebar, header, main, aside, .leaflet-control, .leaflet-bar, .leaflet-popup-content {
+    font-size: inherit;
+}

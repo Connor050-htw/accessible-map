@@ -83,7 +83,8 @@ export function add3DBuildings(mapboxMap, setInitialCamera = true) {
     
     if (setInitialCamera) {
         mapboxMap.setPitch(60);
-        mapboxMap.setBearing(-17.6);
+        // Ensure initial bearing faces due north when entering 3D
+        mapboxMap.setBearing(0);
     }
     
     configure3DControls(mapboxMap);
