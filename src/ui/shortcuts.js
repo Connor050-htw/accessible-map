@@ -60,9 +60,8 @@ export function initializeKeyboardShortcuts() {
  * Initialize document-level keyboard shortcuts
  */
 export function initializeDocumentShortcuts() {
-    // Shift + F to focus the search bar
     document.addEventListener('keydown', (event) => {
-        if (event.shiftKey && event.code === 'KeyF') {
+        if ((event.ctrlKey && event.code === 'KeyF') || (event.shiftKey && event.code === 'KeyF')) {
             event.preventDefault();
             const searchInput = document.querySelector('.search-input');
             if (searchInput) {

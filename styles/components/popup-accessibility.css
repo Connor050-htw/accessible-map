@@ -1,0 +1,68 @@
+/* Popup castle accessibility font size override */
+body.size-normal .leaflet-popup-content h2,
+body.size-normal .leaflet-popup-content p {
+    font-size: 1.1em;
+}
+body.size-big .leaflet-popup-content h2,
+body.size-big .leaflet-popup-content p {
+    font-size: 1.35em;
+}
+body.size-bigger .leaflet-popup-content h2,
+body.size-bigger .leaflet-popup-content p {
+    font-size: 1.6em;
+}
+
+/* Popup close button (X) size scaling */
+body.size-normal .leaflet-popup-close-button {
+    font-size: 2.5em !important;
+}
+body.size-big .leaflet-popup-close-button {
+    font-size: 3.0em !important;
+}
+body.size-bigger .leaflet-popup-close-button {
+    font-size: 3.5em !important;
+}
+
+/* Header navigation size scaling */
+body.size-normal header h1,
+body.size-normal header p {
+    font-size: 2rem;
+}
+body.size-normal header nav ul li,
+body.size-normal header nav ul a,
+body.size-normal header nav ul button {
+    font-size: 1.2rem;
+}
+
+body.size-big header h1,
+body.size-big header p {
+    font-size: 2.4rem;
+}
+body.size-big header nav ul li,
+body.size-big header nav ul a,
+body.size-big header nav ul button {
+    font-size: 1.44rem;
+}
+
+body.size-bigger header h1,
+body.size-bigger header p {
+    font-size: 2.8rem;
+}
+body.size-bigger header nav ul li,
+body.size-bigger header nav ul a,
+body.size-bigger header nav ul button {
+    font-size: 1.68rem;
+}
+
+/* Mobile header size scaling */
+@media (max-width: 768px) {
+    body.size-normal header p {
+        font-size: 1.5rem;
+    }
+    body.size-big header p {
+        font-size: 1.8rem;
+    }
+    body.size-bigger header p {
+        font-size: 2.1rem;
+    }
+}
