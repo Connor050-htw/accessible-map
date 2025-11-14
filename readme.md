@@ -4,6 +4,7 @@ Dieses Repository enthält eine barrierefreundliche Webkarte (Leaflet) und eine 
 
 ## TODO
 
+- LOD Slider in allen Layern funktionierend machen
 - (Ziehen im 3D bei gedrehter Karte ist buggy)
 
 ## Inhalt

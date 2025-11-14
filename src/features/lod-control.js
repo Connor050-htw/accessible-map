@@ -5,8 +5,8 @@
  *   (at low zoom levels, boundaries are automatically simplified with fewer geometry points)
  * - Manual slider levels:
  *   0 = Low (only country borders visible)
- *   1 = Medium (country + state borders, more roads, major labels)
- *   2 = High (full details - all boundaries, roads, labels)
+ *   1 = Medium (country + state borders, all roads with labels, major geographic labels, no small POI icons)
+ *   2 = High (full details - all boundaries, roads, labels, POI icons)
  * - Geometric simplification happens automatically via vector tiles:
  *   Zoom 0-3: Countries are simple shapes (e.g., Germany ≈ oval/circle)
  *   Zoom 4-6: More detailed shapes with major features
@@ -88,16 +88,23 @@ function applyVectorLOD(level, glMap) {
             }
 
             // Symbol layers: labels and icons
-            // Level 0: Hide all | Level 1: Major only | Level 2: Show all
+            // Level 0: Hide all | Level 1: Hide small POI icons, keep major labels and road names | Level 2: Show all
             if (layer.type === 'symbol') {
                 try {
                     if (level === 0) {
                         glMap.setLayoutProperty(layerId, 'visibility', 'none');
                     } else if (level === 1) {
-                        // Only show major geographic features (countries, states, major cities)
-                        if (/country|state|province|capital|city/i.test(layerId) && !/minor|neighbourhood|hamlet/i.test(layerId)) {
+                        // Keep only: road labels, geographic place labels (countries, cities, etc.)
+                        // Hide: all POI icons/symbols (parking, playground, monument, restaurant, etc.)
+                        const isRoadLabel = /(road|street|highway|route|path|way).*label|label.*(road|street|highway|route|path|way)/i.test(layerId);
+                        const isPlaceLabel = /(country|state|province|capital|city|town|village|place|suburb|neighbourhood|locality).*label|label.*(country|state|province|capital|city|town|village|place|suburb|neighbourhood|locality)/i.test(layerId);
+                        const isWaterLabel = /water.*label|label.*water|lake|river|sea|ocean/i.test(layerId);
+                        
+                        // Keep these labels visible
+                        if (isRoadLabel || isPlaceLabel || isWaterLabel) {
                             glMap.setLayoutProperty(layerId, 'visibility', 'visible');
                         } else {
+                            // Hide everything else (all POI symbols: parking, playground, monument, restaurant, etc.)
                             glMap.setLayoutProperty(layerId, 'visibility', 'none');
                         }
                     } else {
@@ -162,12 +169,8 @@ function applyVectorLOD(level, glMap) {
                             // Low: Only motorways/trunk
                             glMap.setLayoutProperty(layerId, 'visibility', isMotorway ? 'visible' : 'none');
                         } else if (level === 1) {
-                            // Medium: Hide only minor roads; default to visible when unknown to avoid over-hiding
-                            if (isMinor) {
-                                glMap.setLayoutProperty(layerId, 'visibility', 'none');
-                            } else {
-                                glMap.setLayoutProperty(layerId, 'visibility', 'visible');
-                            }
+                            // Medium: All roads visible
+                            glMap.setLayoutProperty(layerId, 'visibility', 'visible');
                         } else {
                             // High: All roads (restore original)
                             const orig = originalLayerProps.get(layerId);
