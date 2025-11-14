@@ -74,7 +74,7 @@ function addPOIFeatures(poi, layer, map) {
     // Add popup
     const popupContent = `
         <h2>${poi.properties.name}</h2>
-        <img src="${poi.properties["img_file"]}" alt="">
+        <img src="${poi.properties["img_file"]}" alt="Foto von ${poi.properties.name}">
         <p>${poi.properties['description-translated']}</p>
     `;
     layer.bindPopup(popupContent);
