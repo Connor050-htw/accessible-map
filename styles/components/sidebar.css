@@ -125,3 +125,48 @@ aside .symbol span.symbol-image {
     padding: 0;
     line-height: 0;
 }
+
+/* Castles list styling */
+.castle-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.castle-list li {
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.castle-list li:last-child {
+    border-bottom: none;
+}
+
+.castle-list button {
+    all: unset;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    padding: 6px 2px;
+}
+
+.castle-list button:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+.castle-details {
+    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.castle-details img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 8px 0;
+}

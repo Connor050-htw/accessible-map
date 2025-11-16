@@ -24,10 +24,10 @@
         <div id="size-modal-overlay" style="position:fixed;z-index:99999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;">
             <div style="background:white;padding:2.5rem 2rem;border-radius:1.2rem;box-shadow:0 2px 16px rgba(0,0,0,0.2);text-align:center;min-width:260px;max-width:90vw;">
                 <h2 style="margin-bottom:1.5rem;">Wähle die Größe der Elemente</h2>
-                <div style="display:flex;gap:1.2rem;justify-content:center;">
-                    <button class="size-select-btn" data-size="normal" style="font-size:1rem;padding:0.7em 1.5em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Normal</button>
-                    <button class="size-select-btn" data-size="big" style="font-size:1.2rem;padding:0.8em 1.7em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Big</button>
-                    <button class="size-select-btn" data-size="bigger" style="font-size:1.4rem;padding:0.9em 2em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Bigger</button>
+                <div style="display:flex;gap:1.2rem;justify-content:center;align-items:flex-end;">
+                    <button class="size-select-btn" data-size="normal" style="padding:0.7em 1.5em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Normal</button>
+                    <button class="size-select-btn" data-size="big" style="font-size:120%;padding:0.7em 1.5em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Big</button>
+                    <button class="size-select-btn" data-size="bigger" style="font-size:140%;padding:0.7em 1.5em;border-radius:0.7em;border:2px solid #333;background:#f5f5f5;cursor:pointer;">Bigger</button>
                 </div>
                 <!--<p style="margin-top:1.5rem;font-size:0.95em;color:#444;">Diese Einstellung wird nicht gespeichert.</p> -->
             </div>
@@ -270,6 +270,19 @@
                         <span class="leaflet-control-layers-toggle"></span>
                         <p>Map layers toggle</p>
                     </div>
+                </div>
+            </div>
+            <!-- Castles list (collapsed by default) -->
+            <div id="castles-section" role="group" aria-labelledby="castles-heading">
+                <div class="section-header">
+                    <h2 id="castles-heading">Castles (Dataset)</h2>
+                    <button id="castles-toggle" class="section-toggle" aria-controls="castles-content" aria-expanded="false" title="Expand / Reduce">
+                        <span class="arrow" aria-hidden="true">▸</span>
+                        <span class="visually-hidden">Toggle Castles List</span>
+                    </button>
+                </div>
+                <div id="castles-content" class="section-content hidden">
+                    <ul id="castles-list" class="castle-list" aria-label="Visible castles"></ul>
                 </div>
             </div>
         </aside>

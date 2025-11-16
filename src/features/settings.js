@@ -21,15 +21,15 @@ export function initializeFontSizeControls() {
     }
 
     function increaseFontSize() {
-        fontSize += 2; // feiner Schritt für Text
-        buttonSize += 5; // feiner Schritt für Map-Buttons
+        fontSize += 1; // kleinerer Schritt für Text
+        buttonSize += 2; // kleinerer Schritt für Map-Buttons
         applySizes();
         document.body.style.gridTemplateRows = 'auto max-content';
     }
 
     function decreaseFontSize() {
-        fontSize = Math.max(8, fontSize - 2);
-        buttonSize = Math.max(20, buttonSize - 5);
+        fontSize = Math.max(8, fontSize - 1);
+        buttonSize = Math.max(20, buttonSize - 2);
         applySizes();
     }
 
