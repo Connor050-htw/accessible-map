@@ -81,7 +81,7 @@ function createVoiceControl(map) {
             const voiceBtn = L.DomUtil.create('button', 'voice-control-btn', container);
             voiceBtn.type = 'button';
             voiceBtn.id = 'voice-control-btn';
-            voiceBtn.title = 'Sprachsuche (Strg+K)';
+            voiceBtn.title = 'Sprachsuche (Shift+K)';
             voiceBtn.setAttribute('aria-label', 'Sprachsuche');
             
             // Create img element for mic icon
@@ -98,9 +98,10 @@ function createVoiceControl(map) {
 
     map.addControl(new VoiceSearchControl({ position: 'topleft' }));
 
-    // Add keyboard shortcut (Ctrl/Cmd + K)
+    // Add keyboard shortcut (Shift + K)
     document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        // Use event.code to be layout independent and require Shift modifier
+        if (e.shiftKey && (e.key === 'k' || e.key === 'K' || e.code === 'KeyK')) {
             e.preventDefault();
             toggleVoiceSearch(map);
         }
@@ -390,7 +391,7 @@ function updateVoiceControlButton(state) {
             btn.setAttribute('aria-label', 'Nicht gefunden');
             break;
         default: // 'idle'
-            btn.title = 'Sprachsuche (Strg+K)';
+            btn.title = 'Sprachsuche (Shift+K)';
             btn.setAttribute('aria-label', 'Sprachsuche');
             btn.setAttribute('aria-pressed', 'false');
             break;

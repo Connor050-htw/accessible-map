@@ -15,6 +15,8 @@ let buildings3DEnabled = false;
 let currentBasemap = null;
 let savedCameraState = null; // Store camera state for basemap changes
 let keyboardHandler = null; // Document-level Shift+Arrow handler for 3D
+// Use Shift key as modifier for touch/remote control (no V-key replacement needed)
+let pointerHandlers = null; // store pointer handlers so we can remove them
 
 function getCurrentGLMap() {
     try {
@@ -29,7 +31,9 @@ function getCurrentGLMap() {
 function attach3DKeyboardHandler() {
     if (keyboardHandler) return; // already attached
     keyboardHandler = (event) => {
-        if (!buildings3DEnabled || !event.shiftKey) return;
+        // allow control when 3D is enabled and one of the modifier keys is active:
+        // Shift or Alt
+        if (!buildings3DEnabled || !(event.shiftKey || event.altKey)) return;
         const tag = (event.target && event.target.tagName) ? event.target.tagName.toLowerCase() : '';
         if (tag === 'input' || tag === 'textarea' || (event.target && event.target.isContentEditable)) return;
         const glMap = getCurrentGLMap();
@@ -68,6 +72,91 @@ function detach3DKeyboardHandler() {
     if (!keyboardHandler) return;
     document.removeEventListener('keydown', keyboardHandler, true);
     keyboardHandler = null;
+}
+
+// Shift key is read from event.shiftKey directly; no extra listeners required
+
+function attach3DPointerHandlers(glMap) {
+    if (!glMap || pointerHandlers) return;
+    const container = glMap.getCanvasContainer();
+    let rotating = false;
+    let last = null;
+    let pointerId = null;
+    const rotateSensitivity = 0.2; // degrees per pixel horizontally
+    const tiltSensitivity = 0.12;   // degrees per pixel vertically
+
+    const onDown = (ev) => {
+        // Only start our custom rotate/tilt when the user explicitly requests it:
+        // Require a modifier: Shift or Alt. Without modifier, allow normal panning.
+        const hasModifier = ev.shiftKey || ev.altKey;
+        if (!hasModifier) return; // no modifier -> let the map pan normally
+        rotating = true;
+        last = { x: ev.clientX, y: ev.clientY };
+        pointerId = ev.pointerId;
+        try { container.setPointerCapture(pointerId); } catch (e) {}
+        // prevent default dragging while we control rotation
+        ev.preventDefault();
+    };
+
+    const onMove = (ev) => {
+        if (!rotating || pointerId !== ev.pointerId || !last) return;
+        const dx = ev.clientX - last.x;
+        const dy = ev.clientY - last.y;
+        last = { x: ev.clientX, y: ev.clientY };
+
+        // Update bearing and pitch directly
+        try {
+            const currentBearing = glMap.getBearing();
+            const currentPitch = glMap.getPitch();
+            const newBearing = (currentBearing + dx * rotateSensitivity) % 360;
+            let newPitch = currentPitch - dy * tiltSensitivity;
+            if (newPitch < 0) newPitch = 0;
+            if (newPitch > 85) newPitch = 85;
+            // Use jumpTo / set methods to avoid interfering with other map interactions
+            glMap.setBearing(newBearing);
+            glMap.setPitch(newPitch);
+        } catch (err) {
+            // some GL map implementations use different method names; ignore errors
+            console.error('Pointer rotate/tilt error:', err);
+        }
+        ev.preventDefault();
+    };
+
+    const onUp = (ev) => {
+        if (!rotating || pointerId !== ev.pointerId) return;
+        rotating = false;
+        last = null;
+        try { container.releasePointerCapture(ev.pointerId); } catch (e) {}
+        pointerId = null;
+        ev.preventDefault();
+    };
+
+    container.addEventListener('pointerdown', onDown, { passive: false });
+    container.addEventListener('pointermove', onMove, { passive: false });
+    container.addEventListener('pointerup', onUp, { passive: false });
+    container.addEventListener('pointercancel', onUp, { passive: false });
+
+    pointerHandlers = { onDown, onMove, onUp };
+}
+
+function detach3DPointerHandlers() {
+    if (!pointerHandlers) return;
+    try {
+        // remove from current basemap(s) canvas containers
+        for (const baseLayer of Object.values(baseMaps)) {
+            const gl = getGLMapFromLayer(baseLayer);
+            if (gl) {
+                const c = gl.getCanvasContainer();
+                c.removeEventListener('pointerdown', pointerHandlers.onDown);
+                c.removeEventListener('pointermove', pointerHandlers.onMove);
+                c.removeEventListener('pointerup', pointerHandlers.onUp);
+                c.removeEventListener('pointercancel', pointerHandlers.onUp);
+            }
+        }
+    } catch (e) {
+        console.warn('Error detaching pointer handlers', e);
+    }
+    pointerHandlers = null;
 }
 
 /**
@@ -122,11 +211,13 @@ export function enable3DMode(map, showCompass) {
                 console.log('Adding 3D buildings...');
                 add3DBuildings(glMap);
                 attach3DKeyboardHandler();
+                attach3DPointerHandlers(glMap);
             } else {
                 glMap.once('idle', () => {
                     console.log('Style ready, adding 3D buildings...');
                     add3DBuildings(glMap);
                     attach3DKeyboardHandler();
+                    attach3DPointerHandlers(glMap);
                 });
             }
         };
@@ -160,6 +251,7 @@ export function disable3DMode(map, hideCompass) {
     buildings3DEnabled = false;
     console.log('3D View disabled');
     detach3DKeyboardHandler();
+    detach3DPointerHandlers();
     
     try {
         // Remove 3D from ALL basemap layers, not just the current one
@@ -256,6 +348,7 @@ export function handle3DBasemapChange(event) {
                 glMap.dragRotate.enable();
                 glMap.touchPitch.enable();
                 attach3DKeyboardHandler();
+                attach3DPointerHandlers(glMap);
                 
                 // Hide POI markers in 3D mode
                 hidePOIMarkers(event.target);
