@@ -56,8 +56,9 @@
 }
 
 .leaflet-control-ai .ai-main-btn img {
-    width: 18px;
-    height: 18px;
+    width: calc(var(--map-button-size, 30px) * 0.6);
+    height: calc(var(--map-button-size, 30px) * 0.6);
+    object-fit: contain;
     pointer-events: none;
     display: block;
     margin: 6px auto;
